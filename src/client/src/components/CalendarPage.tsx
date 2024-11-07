@@ -5,7 +5,7 @@ import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/ad
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
-import axios from 'axios';
+import { createMeal, getAllMeals, updateMeal } from '../Apis/mealsApi';
 
 const localizer = momentLocalizer(moment);
 
@@ -16,7 +16,7 @@ interface MyMeal extends Event {
   end: Date;
 }
 
-interface Meal {
+export interface Meal {
   id: number;
   name: string;
   startDate: number;
@@ -45,21 +45,16 @@ const CalendarPage = () => {
       const title = window.prompt('New Event name');
     
         // Fetch data from the Express backend
-        axios
-          .post<{ rowID: number }>('http://localhost:4000/api/data', {
-            start: start.toISOString(),
-            end: end.toISOString(),
-            title,
-          })
+        if (title) {
+          createMeal(start.toISOString(), end.toISOString(), title)
           .then((response) => {
-            if (title) {
-              setMyMeals((prev) => [...prev, { start, end, title, id: response.data.rowID } as MyMeal]);
-              console.log('Server response:', response.data.rowID);
-            }
-          })
+              setMyMeals((prev) => [...prev, { start, end, title, id: response.rowID } as MyMeal]);
+                console.log('Server response:', response.rowID);
+            })
           .catch((error) => {
-            console.error('Error sending data:', error);
-          });
+              console.error('Error sending data:', error);
+            });
+        }
       },
     [setMyMeals]
   );
@@ -83,53 +78,36 @@ const CalendarPage = () => {
       const [startHours, startMinutes] = newStartTime.split(":").map(Number);
       const [endHours, endMinutes] = newEndTime.split(":").map(Number);
 
-    axios
-          .post('http://localhost:4000/api/data/update', {
-            start: new Date(
-              event.start.getFullYear(),
-              event.start.getMonth(),
-              event.start.getDate(),
-              startHours,
-              startMinutes),
-            end: new Date(
-              event.end.getFullYear(),
-              event.end.getMonth(),
-              event.end.getDate(),
-              endHours,
-              endMinutes
-            ),
-            title: newTitle,
-            id: event.id
-          })
-          .then(() => {
-            setMyMeals((prev) => prev.map(
-              (mealItem) => mealItem.id === event.id 
-              ?{
-                ...mealItem,
-                title: newTitle,
-                start: new Date(
-                  event.start.getFullYear(),
-                  event.start.getMonth(),
-                  event.start.getDate(),
-                  startHours,
-                  startMinutes
-                ),
-                end: new Date(
-                  event.end.getFullYear(),
-                  event.end.getMonth(),
-                  event.end.getDate(),
-                  endHours,
-                  endMinutes
-                ),
-              }
-            : mealItem
-            ));
-            console.log('Server response:');
-            
-          })
-          .catch((error) => {
-            console.error('Error sending data:', error);
-          });
+      const newStartDate = new Date(event.start.getFullYear(),
+        event.start.getMonth(),
+        event.start.getDate(),
+        startHours,
+        startMinutes);
+
+        const newEndDate = new Date(event.end.getFullYear(),
+        event.end.getMonth(),
+        event.end.getDate(),
+        endHours,
+        endMinutes);
+
+        updateMeal(newStartDate.toISOString(), newEndDate.toISOString(), newTitle, event.id)
+        .then(() => {
+          setMyMeals((prev) => prev.map(
+            (mealItem) => mealItem.id === event.id 
+            ?{
+              ...mealItem,
+              title: newTitle,
+              start: newStartDate,
+              end: newEndDate,
+            }
+          : mealItem
+          ));
+          console.log('Server response:');
+          
+        })
+        .catch((error) => {
+          console.error('Error sending data:', error);
+        });;
       }
     /* fetchMealById(event.id)
       .then((meal) => {
@@ -174,20 +152,9 @@ const CalendarPage = () => {
       .catch(); */
   }, []); 
 
-  async function fetchMeals(): Promise<Meal[]> {
-    try {
-      const response = await axios.get<Meal[]>(
-        'http://localhost:4000/api/data/getall'
-      );
-      return response.data; // The response data is an array of Meal
-    } catch (error) {
-      console.error('Error fetching meals:', error);
-      throw new Error('Could not fetch meals');
-    }
-  }
-
   useEffect(() => {
-    fetchMeals().then((fetchedMeals) => {
+    getAllMeals()
+    .then((fetchedMeals) => {
       setMyMeals(
         fetchedMeals.map((meal: Meal) => ({
           start: new Date(meal.startDate), // Ensure to format if needed
@@ -198,35 +165,90 @@ const CalendarPage = () => {
       );
 
       console.log('setMeals');
+    })
+    .catch((error) => {
+      console.error('Error fetching meals:', error);
+      throw new Error('Could not fetch meals');
     });
   }, [setMyMeals]);
 
   const handleEventDrop = (dropInfo: EventInteractionArgs<MyMeal>) => {
     // Handle the drop here, update your events state
     const { event, start, end } = dropInfo;
+
+    const startStr = start instanceof Date ? start.toISOString() :start;
+    const endStr = end instanceof Date ? end.toISOString() : end;
+
+    updateMeal(startStr, endStr, event.title, event.id)
+        .then(() => {
+          setMyMeals((prev) => prev.map(
+            (mealItem) => mealItem.id === event.id 
+            ?{
+              ...mealItem,
+              title: event.title,
+              start: new Date(startStr),
+              end: new Date(endStr),
+            }
+          : mealItem
+          ));
+          console.log('Server response:');
+          console.log(event.start);
+        })
+        .catch((error) => {
+          console.error('Error sending data:', error);
+        });;
+    console.log(event.title, start, end);
+  };
+
+  const handleResizeEvent = (dropInfo: EventInteractionArgs<MyMeal>) => {
+    const { event, start, end } = dropInfo;
+    const startStr = start instanceof Date ? start.toISOString() :start;
+    const endStr = end instanceof Date ? end.toISOString() : end;
+
+    setMyMeals((prev) => prev.map(
+      (mealItem) => mealItem.id === event.id 
+      ?{
+        ...mealItem,
+        title: event.title,
+        start: new Date(startStr),
+        end: new Date(endStr),
+      }
+    : mealItem
+    ));
+    
+    updateMeal(startStr, endStr, event.title, event.id)
+        .then(() => {
+          console.log('Server response:');
+          console.log(event.start);
+        })
+        .catch((error) => {
+          console.error('Error sending data:', error);
+        });
     console.log(event.title, start, end);
   };
 
   return (
-      <div style={{ height: '80vh', padding: '20px' }}>
-          <h2>Weekly Meal Planner</h2>
-          <DragAndDropCalendar
-            localizer={localizer}
-            events={myMeals}
-            startAccessor="start"
-            endAccessor="end"
-            defaultView="week" // Set default view to week
-            views={['month', 'week', 'day']} // Enable only week and day views
-            onEventDrop={handleEventDrop}
-            style={{ height: 800 }}
-            min={new Date(2024, 10, 29, 8, 0)} // 8 AM
-            max={new Date(2024, 10, 29, 20, 0)} // 8 PM
-            defaultDate={new Date()}
-            onSelectEvent={handleSelectEvent}
-            onSelectSlot={handleSelectSlot}
-            selectable
-          />
-        </div>
+    <div style={{ height: '80vh', padding: '20px' }}>
+      <h2>Weekly Meal Planner</h2>
+      <DragAndDropCalendar
+        localizer={localizer}
+        events={myMeals}
+        startAccessor="start"
+        endAccessor="end"
+        defaultView="week" // Set default view to week
+        views={['month', 'week', 'day']} // Enable only week and day views
+        onEventDrop={handleEventDrop}
+        resizable
+        onEventResize={handleResizeEvent}
+        style={{ height: 800 }}
+        min={new Date(2024, 10, 29, 8, 0)} // 8 AM
+        max={new Date(2024, 10, 29, 20, 0)} // 8 PM
+        defaultDate={new Date()}
+        onSelectEvent={handleSelectEvent}
+        onSelectSlot={handleSelectSlot}
+        selectable
+      />
+    </div>
   );
 };
 

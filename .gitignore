@@ -1,2 +1,9 @@
 node_modules
 dist
+meals.db
+meals.sql
+package-lock.json
+src/client/package-lock.json
+package-lock.json
+dist/server/server.js
+
