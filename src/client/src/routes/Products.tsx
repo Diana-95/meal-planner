@@ -94,7 +94,6 @@ const Products = () => {
                 </select>
               </td>
               <td>
-                <button onClick={() => handleEditProduct(product.id)} className={styles.editButton}>Edit</button>
                 <button onClick={() => handleDeleteProduct(product.id)} className={styles.deleteButton}>Delete</button>
               </td>
             </tr>
