@@ -4,4 +4,5 @@ export interface Repository<T> {
     update(r: T): Promise<void>;
     getAll(limit: number): Promise<T[]>;
     findById(id: number): Promise<T>;
+    delete(id: number): Promise<void>;
 }

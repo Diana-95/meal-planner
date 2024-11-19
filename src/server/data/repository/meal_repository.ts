@@ -1,8 +1,22 @@
-import { SqlRepository } from "./sql_repository";
-import { Meal } from "../entity/meal";
+import { SqlRepository } from "../sql_repository";
+import { Meal } from "../../entity/meal";
 
 
 export class MealRepository extends SqlRepository<Meal> {
+    async delete(id: number): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.db.run(`DELETE FROM Meals 
+                WHERE id = ?`, //db.run where no result needed
+                id,
+                function(err){
+                    if (err) {
+                        console.log(err.message);
+                        reject(err.message);
+                    }
+                    resolve();
+                });
+        });
+    }
 
     async create(r: Meal): Promise<number> {
         return new Promise<number>((resolve, reject) => {

@@ -1,5 +1,5 @@
 import express, { Express } from "express";
-import mealRepository from "../data";
+import { mealRepository } from "../data";
 import { Meal } from "../entity/meal";
 const rowLimit = 10;
 
@@ -43,6 +43,14 @@ export const registerMealInsert = (app: Express) => {
         res.status(201).json();
         // Send a response back
         //res.json({ message: 'Data received successfully!', receivedData });
+    });
+
+    app.post('/api/data/delete', async (req, res) => {
+        const receivedData = req.body; // Access the sent data
+
+        console.log("Received data:", receivedData);
+        await mealRepository.delete(receivedData.id);
+        res.status(201).json();
     });
 
     app.get('/api/data/getall', async (req, res) => {
