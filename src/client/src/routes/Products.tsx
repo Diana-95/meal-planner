@@ -20,11 +20,6 @@ const Products = () => {
     console.log("Add new product functionality to be implemented");
   };
 
-  const handleEditProduct = (id: number) => {
-    
-    console.log(`Edit product with id: ${id}`);
-  };
-
   const handleDeleteProduct = (id: number) => {
     deleteProduct(id)
     .then(() => {
