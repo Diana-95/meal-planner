@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import CalendarPage, { mealsLoader } from './routes/CalendarPage';
@@ -13,6 +13,9 @@ import NewDish from './components/recipes/NewDish';
 
 import NewProduct from './components/groceries/NewProduct';
 import Products, { productsLoader } from './routes/Products';
+import DishesContext, { DishesProvider } from './store/dishes-context';
+import { getAllDishes } from './Apis/dishesApi';
+import { Dish } from './types/types';
 
 const router = createBrowserRouter([
   {
@@ -69,7 +72,10 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+
+  return <DishesProvider>
+            <RouterProvider router={router} />
+      </DishesProvider>
 }
 
 export default App;

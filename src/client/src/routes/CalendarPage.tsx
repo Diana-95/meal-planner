@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Outlet, useLoaderData, useNavigate, useRevalidator } from 'react-router-dom';
 
 import { Calendar, momentLocalizer, Event } from "react-big-calendar";
@@ -10,18 +10,36 @@ import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { getAllMeals, updateMeal } from '../Apis/mealsApi';
 import { Meal } from '../types/types';
 import routes from './routes';
+import DishesContext from '../store/dishes-context';
+
+const CustomEvent = ({ event }: { event: any }) => {
+  return (
+    <div>
+      <strong>{event.title}</strong>
+      {event.dishName && (
+        <div style={{ fontSize: '0.8em', color: '#111' }}>{event.dishName}</div>
+      )}
+      {event.location && (
+        <div style={{ fontSize: '0.8em', color: '#888' }}>📍 {event.location}</div>
+      )}
+    </div>
+  );
+};
 
 export interface MyMeal extends Event {
   id: number;
   title: string;
   start: Date;
   end: Date;
+  dishName: string
 }
+
 const DragAndDropCalendar = withDragAndDrop<MyMeal>(Calendar);
 const localizer = momentLocalizer(moment);
 
 const CalendarPage = () => {
 
+  const dishesCtx = useContext(DishesContext);
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const loadedMeals = useLoaderData() as Meal[];
@@ -30,7 +48,8 @@ const CalendarPage = () => {
     title: meal.name,
     start: new Date(meal.startDate),
     end: new Date(meal.endDate),
-    allDay: true
+    allDay: true,
+    dishName: dishesCtx.
   }));
 
   const [myMeals, setMyMeals] = useState(loadedMyMeals);
@@ -119,6 +138,9 @@ const CalendarPage = () => {
         onSelectSlot={handleSelectSlot}
         selectable
         allDayAccessor={(event) => event.allDay || true}
+        components={{
+          event: CustomEvent, // Use the custom event component
+        }}
         // toolbar={true} // Keep toolbar
         // components={{
         //   toolbar: MyCustomToolbar // Your custom toolbar component

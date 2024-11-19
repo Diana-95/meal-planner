@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate, useLocation, useRevalidator } from 'react-router-dom';
 
 import DatePicker from "react-datepicker";
@@ -8,6 +8,8 @@ import { createMeal } from '../../Apis/mealsApi';
 
 import classes from './NewMeal.module.css';
 import routes from '../../routes/routes';
+import { Dish } from '../../types/types';
+import DishesContext from '../../store/dishes-context';
 
 const NewMeal = () => {
   const navigate = useNavigate();
@@ -15,9 +17,11 @@ const NewMeal = () => {
   const location = useLocation();
   const state = location.state as {start: string, end: string};
 
+  const dishesCtx = useContext(DishesContext);
   const [title, setTitle] = useState<string>("");
   const [start, setStart] = useState<Date | null>(new Date(state.start));
   const [end, setEnd] = useState<Date | null>(new Date(state.end));
+  const [selectedDish, setSelectedDish] = useState<Dish>();
 
   const handleSave = () => {
     if (title && start && end) {
@@ -54,6 +58,25 @@ const NewMeal = () => {
                     onChange={(e) => setTitle(e.target.value)}
                     style={{ width: "100%", padding: "5px", marginTop: "5px" }}
                   />
+                </label>
+                <label>
+                Choose a fruit:
+                <select value={selectedDish?.id} onChange={
+                  (e) => 
+                setSelectedDish(
+                  dishesCtx?.dishes.find(
+                    (obj) => e.target.value === obj.id.toString())
+                  )
+                  }>
+                    <option value="" disabled>
+                      Select one
+                    </option>
+                    {dishesCtx?.dishes.map((dish) => (
+                      <option key={dish.id} value={dish.id}>
+                        {dish.name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
               <div style={{ marginBottom: "10px" }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate, useRevalidator, useParams } from 'react-router-dom';
 
 import DatePicker from "react-datepicker";
@@ -8,9 +8,11 @@ import { deleteMeal, updateMeal } from '../../Apis/mealsApi';
 
 import classes from './NewMeal.module.css';
 import routes from '../../routes/routes';
+import DishesContext from '../../store/dishes-context';
 
 const EditMeal = () => {
 
+  const dishesCtx = useContext(DishesContext);
   const navigate = useNavigate();
   const revalidator = useRevalidator();
 
@@ -33,7 +35,6 @@ const EditMeal = () => {
       })
       .catch((error) => {
         console.error('Error sending data:', error);
-        // navigate('/', {state: {shouldRefresh: false}});
       });
     }
   };
@@ -76,7 +77,6 @@ const EditMeal = () => {
                     selected={start}
                     onChange={(date: Date | null) => setStart(date)}
                     dateFormat="yyyy-MM-dd"
-              
                   />
                 </label>
               </div>
