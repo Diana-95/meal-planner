@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { LoaderFunctionArgs, useLoaderData, useNavigate, useRevalidator } from 'react-router-dom';
-import { getDishById, updateDish } from '../../Apis/dishesApi';
+import { deleteDish, getDishById, updateDish } from '../../Apis/dishesApi';
 import { Dish, Ingredient, Product } from '../../types/types';
 import { getAllProducts } from '../../Apis/productsApi';
-import { addIngredient, getIngredientsByDishId } from '../../Apis/ingredientsApi';
+import { addIngredient, deleteIngredient, getIngredientsByDishId } from '../../Apis/ingredientsApi';
 import styles from './EditDish.module.css';
 import routes from '../../routes/routes';
 
@@ -70,8 +70,27 @@ const EditDish = () => {
     navigate(routes.dishes);
   }
 
-  const onIngredientDeleteHandle = () => {
-    navigate(routes.dishes);
+  const onDeleteHandle = () => {
+      // todo: do you want to delete dialogue
+    deleteDish(dish.id)
+    .then(() => {
+      navigate(routes.dishes);
+    })
+    .catch((error) => {
+      throw new Error(error);
+    });
+  }
+
+  const onIngredientDeleteHandle = (id: number) => {
+    deleteIngredient(id)
+    .then(() => {
+      setIngredients((prevIngredients) => 
+        prevIngredients.filter((ingredient) => ingredient.id !== id)
+      );
+    })
+    .catch((error) => {
+      throw new Error(error);
+    });
   }
 
   const filterProductById = (id: number) => {
@@ -149,7 +168,7 @@ const EditDish = () => {
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.quantity}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{filterProductById(ingredient.productId)?.measure}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}> 
-                <button onClick={onIngredientDeleteHandle} />
+                <button onClick={() => onIngredientDeleteHandle(ingredient.id)} />
               </td>
             </tr>
           ))}
@@ -159,6 +178,9 @@ const EditDish = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <button onClick={onSaveHandle}  style={{ padding: '8px 12px', background: '#4CAF50', color: '#fff', border: 'none', borderRadius: '4px' }}>
           Save
+        </button>
+        <button onClick={onDeleteHandle} style={{ padding: '8px 12px', background: '#f44336', color: '#fff', border: 'none', borderRadius: '4px' }}>
+          Delete
         </button>
         <button onClick={onCloseHandle} style={{ padding: '8px 12px', background: '#f44336', color: '#fff', border: 'none', borderRadius: '4px' }}>
           Cancel

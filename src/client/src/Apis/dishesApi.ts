@@ -23,6 +23,13 @@ export const updateDish = async (name: string, recipe: string, imageUrl: string,
     return response.data;
 }
 
+export const deleteDish = async (id: number) => {
+  const response = await axios.post(API_URL.concat('/delete'), {
+          id
+        });
+  return response.data;
+}
+
 export const getAllDishes = async () => {
     const response = await axios.get<Dish[]>(
         API_URL.concat('/getall')

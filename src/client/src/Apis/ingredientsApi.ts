@@ -23,6 +23,13 @@ export const updateIngredient = async (productId: number, dishId: number, quanti
     return response.data;
 }
 
+export const deleteIngredient = async (id: number) => {
+  const response = await axios.post(API_URL.concat('/delete'), {
+          id
+        });
+  return response.data;
+}
+
 export const getIngredientsByDishId = async (dishId: number) => {
     const response = await axios.get<Ingredient[]>(
         API_URL.concat(`/bydish/${dishId}`)
