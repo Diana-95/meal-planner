@@ -29,6 +29,7 @@ const router = createBrowserRouter([
           {
             path: 'edit/:id/:startTime/:endTime/:title',
             element: <EditMeal />,
+            errorElement: <ErrorPage />,
             // action: changeTodoAction,
             // loader: todoLoader,
           },
@@ -37,12 +38,14 @@ const router = createBrowserRouter([
       {
         path: '/dishes',
         element: <Dishes />,
+        errorElement: <ErrorPage />,
         loader: dishesLoader,
         children: [
           { path: 'new', element: <NewDish /> },
             {
               path: 'edit/:id',
               element: <EditDish />,
+              errorElement: <ErrorPage />,
               // action: changeTodoAction,
               loader: dishLoader,
             },
@@ -51,9 +54,13 @@ const router = createBrowserRouter([
       {
         path: '/products',
         element: <Products />,
+        errorElement: <ErrorPage />,
         loader: productsLoader,
         children: [
-          { path: 'new', element: <NewProduct /> }
+          { path: 'new', 
+            element: <NewProduct/>, 
+            errorElement: <ErrorPage />,
+          }
         ]
       }
     ]
