@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { Meal } from '../components/CalendarPage';
+import { Meal } from '../types/types';
+
 
 const API_URL = 'http://localhost:4000/api/data';
 
@@ -20,6 +21,13 @@ export const updateMeal = async (start: string, end: string, title: string, id: 
             id
           });
     return response.data;
+}
+
+export const deleteMeal = async (id: number) => {
+  const response = await axios.post(API_URL.concat('/delete'), {
+          id
+        });
+  return response.data;
 }
 
 export const getAllMeals = async () => {
