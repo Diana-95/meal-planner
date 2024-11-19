@@ -31,6 +31,14 @@ export const registerIngredientController = (app: Express) => {
         res.status(201).json();
     });
 
+    app.post('/api/data/ingredient/delete', async (req, res) => {
+        const receivedData = req.body; // Access the sent data
+
+        console.log("Received data:", receivedData.id);
+        await ingredientRepository.delete(receivedData.id);
+        res.status(201).json();
+    });
+
     app.get('/api/data/ingredient/getall', async (req, res) => {
         const meals = await ingredientRepository.getAll(rowLimit);
         console.log("/api/data/ingredient/getall");

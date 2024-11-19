@@ -98,7 +98,7 @@ export class IngredientRepository extends SqlRepository<Ingredient> {
 
     async delete(id: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.db.run('DELETE FROM Ingredients WHERE id = ?', //db.run where no result needed
+            this.db.run(`DELETE FROM Ingredients WHERE id = ?`, //db.run where no result needed
                 id,
                 function(err){
                     if (err) {

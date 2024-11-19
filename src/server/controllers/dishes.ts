@@ -38,6 +38,16 @@ export const registerDishController = (app: Express) => {
         //res.json({ message: 'Data received successfully!', receivedData });
     });
 
+    app.post('/api/data/dish/delete', async (req, res) => {
+        const receivedData = req.body; // Access the sent data
+
+        console.log("Received data:", receivedData);
+        await dishRepository.delete(receivedData.id);
+        res.status(201).json();
+        // Send a response back
+        //res.json({ message: 'Data received successfully!', receivedData });
+    });
+
     app.get('/api/data/dish/getall', async (req, res) => {
         const meals = await dishRepository.getAll(rowLimit);
         console.log("/api/data/getall");

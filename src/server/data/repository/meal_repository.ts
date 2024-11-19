@@ -3,6 +3,7 @@ import { Meal } from "../../entity/meal";
 
 
 export class MealRepository extends SqlRepository<Meal> {
+    
     async delete(id: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.db.run(`DELETE FROM Meals 

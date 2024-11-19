@@ -3,8 +3,23 @@ import { Dish } from "../../entity/dish";
 
 
 export class DishRepository extends SqlRepository<Dish> {
+    
     delete(id: number): Promise<void> {
-        throw new Error("Method not implemented.");
+        return new Promise<void>((resolve, reject) => {
+            this.db.run(`
+                DELETE FROM Dishes
+                WHERE id = ?;
+            `, 
+            id,
+            function(err){
+                if (err) {
+                    console.log(err.message);
+                    reject(err.message);
+                }
+                resolve();
+                console.log(`Row(s) updated: ${this.changes}`);
+            });
+        });
     }
 
     async create(r: Dish): Promise<number> {
