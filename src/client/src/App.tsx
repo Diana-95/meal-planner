@@ -27,7 +27,7 @@ const router = createBrowserRouter([
         children: [
         { path: 'new', element: <NewMeal /> },
           {
-            path: 'edit/:id/:startTime/:endTime/:title',
+            path: 'edit/:id/:startTime/:endTime/:title/:dish',
             element: <EditMeal />,
             errorElement: <ErrorPage />,
             // action: changeTodoAction,

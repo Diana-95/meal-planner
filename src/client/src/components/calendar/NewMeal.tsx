@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useRevalidator } from 'react-router-dom';
 
 import DatePicker from "react-datepicker";
@@ -8,25 +8,39 @@ import { createMeal } from '../../Apis/mealsApi';
 
 import classes from './NewMeal.module.css';
 import routes from '../../routes/routes';
+import DishAutocomplete from './DishAutocomplete';
+import { Dish } from '../../types/types';
+import { getDishById } from '../../Apis/dishesApi';
 
 const NewMeal = () => {
   const navigate = useNavigate();
 
   const location = useLocation();
   const state = location.state as {start: string, end: string};
-
+  const revalidator = useRevalidator();
   const [title, setTitle] = useState<string>("");
   const [start, setStart] = useState<Date | null>(new Date(state.start));
   const [end, setEnd] = useState<Date | null>(new Date(state.end));
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
+  useEffect(() => {
+    if(selectedDish?.id)
+        getDishById(selectedDish.id)
+        .then(setSelectedDish)
+        .catch((error) => {throw new Error(error)});
+    
+  }, []);
+  
   const handleSave = () => {
     if (title && start && end) {
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0 ,0, 0);
-      createMeal(start.toISOString(), end.toISOString(), title)
+      console.log('selecteddish', selectedDish);
+      createMeal(start.toISOString(), end.toISOString(), title, selectedDish?.id)
       .then((response) => {
             //  setMyMeals((prev) => [...prev, { start, end, title, id: response.rowID } as MyMeal]);
         console.log('save new event', response.rowID);
+        revalidator.revalidate();
         navigate(routes.calendar);
       })
       .catch((error) => {
@@ -78,6 +92,7 @@ const NewMeal = () => {
                   />
                 </label>
               </div>
+              <DishAutocomplete dish={selectedDish} setDish={setSelectedDish}/>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <button onClick={handleSave} style={{ padding: "10px 20px" }}>
                   Save

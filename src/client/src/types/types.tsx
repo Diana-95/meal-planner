@@ -4,6 +4,7 @@ export interface Meal {
     name: string;
     startDate: number;
     endDate: number;
+    dish: Dish | null;
 }
 export interface Ingredient {
     id: number;

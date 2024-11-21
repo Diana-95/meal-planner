@@ -55,6 +55,13 @@ export const registerDishController = (app: Express) => {
         res.status(200).json(meals);
     });
 
+    app.get('/api/data/dish/getallsuggestions/:query', async (req, res) => {
+        const searchQuery = req.params.query;
+        const meals = await dishRepository.finSuggestedDishes(searchQuery, rowLimit);
+        console.log("/api/data/getall/suggestions");
+        res.status(200).json(meals);
+    });
+
     app.get('/api/data/dish/:id', async (req, res) => {
         const dishId = Number(req.params.id);
         const dish = await dishRepository.findById(dishId);

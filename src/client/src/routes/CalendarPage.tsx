@@ -8,14 +8,29 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
 import { getAllMeals, updateMeal } from '../Apis/mealsApi';
-import { Meal } from '../types/types';
+import { Dish, Meal } from '../types/types';
 import routes from './routes';
+
+const CustomEvent = ({ event }: { event: any }) => {
+  return (
+    <div>
+      <strong>{event.title}</strong>
+      {event.dish?.name && (
+        <div style={{ fontSize: '0.8em', color: '#111' }}>{event.dish?.name}</div>
+      )}
+      {event.location && (
+        <div style={{ fontSize: '0.8em', color: '#888' }}>📍 {event.location}</div>
+      )}
+    </div>
+  );
+};
 
 export interface MyMeal extends Event {
   id: number;
   title: string;
   start: Date;
   end: Date;
+  dish?: Dish | null;
 }
 const DragAndDropCalendar = withDragAndDrop<MyMeal>(Calendar);
 const localizer = momentLocalizer(moment);
@@ -30,7 +45,8 @@ const CalendarPage = () => {
     title: meal.name,
     start: new Date(meal.startDate),
     end: new Date(meal.endDate),
-    allDay: true
+    allDay: true,
+    dish: meal.dish
   }));
 
   const [myMeals, setMyMeals] = useState(loadedMyMeals);
@@ -62,7 +78,7 @@ const CalendarPage = () => {
     console.log("Selected event ID:", event.id);
     console.log("Selected event title:", event.title);
 
-    navigate(routes.editMeal(event.id, event.start.toISOString(), event.end.toISOString(), event.title));
+    navigate(routes.editMeal(event.id, event.start.toISOString(), event.end.toISOString(), event.title, event.dish));
 
      }, []); 
 
@@ -73,7 +89,22 @@ const CalendarPage = () => {
     const startStr = start instanceof Date ? start.toISOString() :start;
     const endStr = end instanceof Date ? end.toISOString() : end;
 
-    navigate(routes.editMeal(event.id, startStr, endStr, event.title));
+    setMyMeals((prev) => prev.map((prevEvent) => 
+      event.id === prevEvent.id 
+        ? {...prevEvent, startTime: startStr, endTime: endStr}
+        : prevEvent
+      ));
+    updateMeal(startStr, endStr, event.title, Number(event.id))
+      .then((response) => {
+
+        // revalidator.revalidate();
+        
+        console.log('edit event', response);
+      })
+      .catch((error) => {
+        console.error('Error sending data:', error);
+      });
+    
   };
 
   const handleResizeEvent = (dropInfo: EventInteractionArgs<MyMeal>) => {
@@ -119,6 +150,9 @@ const CalendarPage = () => {
         onSelectSlot={handleSelectSlot}
         selectable
         allDayAccessor={(event) => event.allDay || true}
+        components={{
+          event: CustomEvent, // Use the custom event component
+        }}
         // toolbar={true} // Keep toolbar
         // components={{
         //   toolbar: MyCustomToolbar // Your custom toolbar component

@@ -36,6 +36,13 @@ export const getAllDishes = async () => {
       );
     return response.data; // The response data is an array of Meal
 }
+// getallsuggestions/:query
+export const getAllSuggestedDishes = async (query: string) => {
+  const response = await axios.get<Dish[]>(
+      API_URL.concat(`/getallsuggestions/${query}`)
+    );
+  return response.data; // The response data is an array of Meal
+}
 
 export const getDishById = async (id: number) => {
   const response = await axios.get<Dish>(

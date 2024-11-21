@@ -1,25 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useRevalidator, useParams } from 'react-router-dom';
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import { deleteMeal, updateMeal } from '../../Apis/mealsApi';
+import { deleteMeal, updateDishoftheMeal, updateMeal } from '../../Apis/mealsApi';
 
 import classes from './NewMeal.module.css';
 import routes from '../../routes/routes';
+import DishAutocomplete from './DishAutocomplete';
+import { Dish } from '../../types/types';
+import { getDishById } from '../../Apis/dishesApi';
 
 const EditMeal = () => {
 
   const navigate = useNavigate();
   const revalidator = useRevalidator();
 
-  const { id, startTime, endTime, title } = 
-  useParams<{ id: string, startTime: string, endTime: string, title: string }>();
+  const { id, startTime, endTime, title, dish } = 
+  useParams<{ id: string, startTime: string, endTime: string, title: string, dish: string }>();
   
   const [eventTitle, setTitle] = useState<string>(title || '');
   const [start, setStart] = useState<Date | null>(new Date(startTime || ''));
   const [end, setEnd] = useState<Date | null>(new Date(endTime || ''));
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  
+  useEffect(() => {
+    if(selectedDish)
+        updateDishoftheMeal(selectedDish?.id, Number(id));
+  }, [selectedDish]);
+  
+  useEffect(() => {
+    if(dish)
+        getDishById(Number(dish))
+        .then(setSelectedDish)
+        .catch((error) => {throw new Error(error)});
+    
+  }, [])
 
   const handleSave = () => {
     if (eventTitle && start && end) {
@@ -91,6 +108,7 @@ const EditMeal = () => {
                   />
                 </label>
               </div>
+              <DishAutocomplete dish={selectedDish} setDish={setSelectedDish}/>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <button onClick={handleSave} style={{ padding: "10px 20px" }}>
                   Save
@@ -101,6 +119,7 @@ const EditMeal = () => {
                 <button onClick={handleDelete} style={{ padding: "10px 20px" }}>
                   Delete meal
                 </button>
+
               </div>
             </div>
           )}

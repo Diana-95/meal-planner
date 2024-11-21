@@ -74,6 +74,26 @@ export class DishRepository extends SqlRepository<Dish> {
         });
     };
 
+    async finSuggestedDishes(query: string, limit: number): Promise<Dish[]> {
+        return new Promise<Dish[]>((resolve, reject) => {
+            this.db.all(`SELECT * FROM Dishes
+                WHERE name LIKE ?
+                LIMIT ? ;`, //db.all returns all rows as a result
+                [`%${query}%`, limit],
+                (err, rows) => {
+                    if (err) {
+                        console.error(err.message);
+                        reject(err.message);
+                        return;
+                    }
+                    console.log("getall");
+                    console.log(rows);
+                    resolve(rows as Dish[]);
+                }
+            );
+        })
+    }
+
     async findById(id: number): Promise<Dish> {
         return new Promise<Dish>((resolve, reject) => {
             this.db.get("SELECT * FROM Dishes where id=$id",

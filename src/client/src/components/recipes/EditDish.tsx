@@ -6,6 +6,7 @@ import { getAllProducts } from '../../Apis/productsApi';
 import { addIngredient, deleteIngredient, getIngredientsByDishId } from '../../Apis/ingredientsApi';
 import styles from './EditDish.module.css';
 import routes from '../../routes/routes';
+import { deleteDishfromMeals } from '../../Apis/mealsApi';
 
 const EditDish = () => {
 
@@ -72,7 +73,10 @@ const EditDish = () => {
 
   const onDeleteHandle = () => {
       // todo: do you want to delete dialogue
-    deleteDish(dish.id)
+    deleteDishfromMeals(dish.id)
+    .then(() => {
+      deleteDish(dish.id)
+    })
     .then(() => {
       navigate(routes.dishes);
     })

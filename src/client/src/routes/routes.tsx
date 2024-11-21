@@ -1,3 +1,5 @@
+import { Dish } from "../types/types";
+
 const routes = {
     home: '/',
     calendar: '/calendar',
@@ -7,7 +9,7 @@ const routes = {
     dishes: '/dishes',
     newDish: '/dishes/new',
     editDish: (id: number) => `edit/${id}`,
-    editMeal: (id: string | number, start: string, end: string, title: string) => `edit/${id}/${start}/${end}/${title}`,
+    editMeal: (id: string | number, start: string, end: string, title: string, dish?: Dish | null) => `edit/${id}/${start}/${end}/${title}/${dish?.id}`,
   };
   
   export default routes;
