@@ -1,11 +1,11 @@
-import axios from 'axios';
+import { axiosInstance } from './utils';
 import { Ingredient } from '../types/types';
 
 
-const API_URL = 'http://localhost:4000/api/data/ingredient';
+const API_URL = '/ingredient';
 
 export const addIngredient = async (productId: number, dishId: number, quantity: number) => {
-    const response = await axios.post<{ rowID: number }>(API_URL, {
+    const response = await axiosInstance.post<{ rowID: number }>(API_URL, {
       productId,
       dishId,
       quantity,
@@ -14,7 +14,7 @@ export const addIngredient = async (productId: number, dishId: number, quantity:
 }
 // not realised
 export const updateIngredient = async (productId: number, dishId: number, quantity: number, id: number) => {
-    const response = await axios.post(API_URL.concat('/update'), {
+    const response = await axiosInstance.post(API_URL.concat('/update'), {
             productId,
             dishId,
             quantity,
@@ -24,23 +24,27 @@ export const updateIngredient = async (productId: number, dishId: number, quanti
 }
 
 export const deleteIngredient = async (id: number) => {
-  const response = await axios.post(API_URL.concat('/delete'), {
+  const response = await axiosInstance.post(API_URL.concat('/delete'), {
           id
         });
   return response.data;
 }
 
 export const getIngredientsByDishId = async (dishId: number) => {
-    const response = await axios.get<Ingredient[]>(
-        API_URL.concat(`/bydish/${dishId}`)
+    const response = await axiosInstance.get<Ingredient[]>(
+        API_URL.concat(`/bydish/${dishId}`),
+        { withCredentials: true }
       );
+    console.log(response.data);
     return response.data; 
 }
 
 export const getIngredientsByProductId = async (productId: number) => {
-  const response = await axios.get<Ingredient[]>(
-      API_URL.concat(`/byproduct/${productId}`)
+  const response = await axiosInstance.get<Ingredient[]>(
+      API_URL.concat(`/byproduct/${productId}`),
+      { withCredentials: true }
     );
+    console.log(response.data);
   return response.data; // The response data is an array of Meal
 }
 

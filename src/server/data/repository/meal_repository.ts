@@ -1,7 +1,7 @@
 import { SqlRepository } from "../sql_repository";
 import { Meal } from "../../entity/meal";
 
-export type MealInput = Omit<Meal, 'dish'> & { dishId : number | null };
+export type MealInput = Omit<Meal, 'dish'> & { dishId : number | null , userId: number};
 
 export class MealRepository extends SqlRepository<Meal, MealInput> {
     
@@ -22,8 +22,8 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
 
     async create(r: MealInput): Promise<number> {
         return new Promise<number>((resolve, reject) => {
-            this.db.run('INSERT INTO Meals (name, startDate, endDate, dishId) VALUES (?, ?, ?, ?)', //db.run where no result needed
-                [r.name, r.startDate, r.endDate, r.dishId],
+            this.db.run('INSERT INTO Meals (name, startDate, endDate, dishId, userId) VALUES (?, ?, ?, ?, ?)', //db.run where no result needed
+                [r.name, r.startDate, r.endDate, r.dishId, r.userId],
                 function(err){
                     if (err) {
                         console.log(err.message);
@@ -92,15 +92,24 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
         });
     }
 
-    async getAll(limit: number): Promise<Meal[]> { 
+    async getAll(limit: number, userId: number): Promise<Meal[]> { 
         return new Promise<Meal[]>((resolve, reject) => {
             this.db.all(
-                `SELECT Meals.id AS mealId, Meals.name AS mealName, Meals.startDate, Meals.endDate, 
-                        Dishes.id AS dishId, Dishes.name AS dishName, Dishes.recipe AS dishRecipe, Dishes.imageUrl AS dishImageUrl
-                 FROM Meals
-                 LEFT JOIN Dishes ON Meals.dishId = Dishes.id
-                 LIMIT $limit`, 
-                {$limit: limit},
+                `SELECT Meals.id AS mealId, 
+                    Meals.name AS mealName, 
+                    Meals.startDate, 
+                    Meals.endDate, 
+                    Meals.userId,
+                    Dishes.id AS dishId, 
+                    Dishes.name AS dishName, 
+                    Dishes.recipe AS dishRecipe, 
+                    Dishes.imageUrl AS dishImageUrl
+                FROM Meals
+                LEFT JOIN Dishes ON Meals.dishId = Dishes.id
+                WHERE Meals.userId = $userId
+                LIMIT $limit;
+                `, 
+                {$limit: limit, $userId: userId},
                 (err, rows) => {
                     if (err) {
                         console.error('Database error:', err.message);
@@ -120,6 +129,7 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
                                     name: row.dishName,
                                     recipe: row.dishRecipe,
                                     imageUrl: row.dishImageUrl,
+                                    userId: row.userId
                                   }
                                 : null, // No associated dish
                         }))

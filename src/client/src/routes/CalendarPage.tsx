@@ -7,7 +7,7 @@ import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/ad
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
-import { getAllMeals, updateMeal } from '../Apis/mealsApi';
+import { getAllMeals, updateMeal } from '../apis/mealsApi';
 import { Dish, Meal } from '../types/types';
 import routes from './routes';
 

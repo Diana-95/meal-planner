@@ -4,7 +4,7 @@ import { Dish } from "../../entity/dish";
 
 export class DishRepository extends SqlRepository<Dish> {
     
-    delete(id: number): Promise<void> {
+    async delete(id: number): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.db.run(`
                 DELETE FROM Dishes
@@ -24,8 +24,8 @@ export class DishRepository extends SqlRepository<Dish> {
 
     async create(r: Dish): Promise<number> {
         return new Promise<number>((resolve, reject) => {
-            this.db.run('INSERT INTO Dishes (name, recipe, imageUrl) VALUES (?, ?, ?)', //db.run where no result needed
-                [r.name, r.recipe, r.imageUrl],
+            this.db.run('INSERT INTO Dishes (name, recipe, imageUrl, userId) VALUES (?, ?, ?, ?)', //db.run where no result needed
+                [r.name, r.recipe, r.imageUrl, r.userId],
                 function(err){
                     if (err) {
                         console.log(err.message);
@@ -56,10 +56,10 @@ export class DishRepository extends SqlRepository<Dish> {
         });
     }
 
-    async getAll(limit: number): Promise<Dish[]> { 
+    async getAll(limit: number, userId: number): Promise<Dish[]> { 
         return new Promise<Dish[]>((resolve, reject) => {
-            this.db.all("SELECT * FROM Dishes limit $limit", //db.all returns all rows as a result
-                {$limit: limit},
+            this.db.all("SELECT * FROM Dishes WHERE userId=$userId limit $limit", //db.all returns all rows as a result
+                {$userId: userId, $limit: limit},
                 (err, rows) => {
                     if (err) {
                         console.error(err.message);
@@ -74,12 +74,12 @@ export class DishRepository extends SqlRepository<Dish> {
         });
     };
 
-    async finSuggestedDishes(query: string, limit: number): Promise<Dish[]> {
+    async findSuggestedDishes(query: string, limit: number, userId: number): Promise<Dish[]> {
         return new Promise<Dish[]>((resolve, reject) => {
             this.db.all(`SELECT * FROM Dishes
-                WHERE name LIKE ?
-                LIMIT ? ;`, //db.all returns all rows as a result
-                [`%${query}%`, limit],
+                WHERE name LIKE $name AND userId=$userId
+                LIMIT $limit ;`, //db.all returns all rows as a result
+                {$name: `%${query}%`, $limit: limit, $userId: userId},
                 (err, rows) => {
                     if (err) {
                         console.error(err.message);
@@ -92,7 +92,7 @@ export class DishRepository extends SqlRepository<Dish> {
                 }
             );
         })
-    }
+    };
 
     async findById(id: number): Promise<Dish> {
         return new Promise<Dish>((resolve, reject) => {
@@ -104,17 +104,5 @@ export class DishRepository extends SqlRepository<Dish> {
                 }
             )
         })
-    }
-
-    async executeQuery(sql: string, params: any): Promise<Dish[]> {
-        return new Promise<Dish[]>((resolve, reject) => {
-            this.db.all<Dish>(sql, params, (err, rows) => {
-                if (err == undefined) {
-                    resolve(rows);
-                } else {
-                    reject(err);
-                }
-            })
-        });
-    }
+    };
 }

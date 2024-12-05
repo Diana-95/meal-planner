@@ -1,6 +1,8 @@
 import express, { Express } from "express";
 import { productRepository } from "../data";
 import { Product } from "../entity/product";
+import { AuthRequest } from "../middleware/authMiddleware";
+import { getUser } from "./utils";
 const rowLimit = 10;
 
 
@@ -11,9 +13,13 @@ export const registerFormMiddleware = (app: Express) => {
 export const registerProductController = (app: Express) => {
     app.post('/api/data/product', async (req, res) => {
         const receivedData = req.body; // Access the sent data
-
         // validate
-        const prod: Product = receivedData as Product;
+        const receivedUser = getUser(req, res);
+        if(!receivedUser) return;
+        const prod: Product = {
+            ...receivedData as Product,
+            userId: receivedUser?.userId
+        }
 
         console.log("Received data:", receivedData);
         const dbResponse = await productRepository.create(prod);
@@ -39,11 +45,26 @@ export const registerProductController = (app: Express) => {
         res.status(201).json();
     });
 
-    app.get('/api/data/product/getall', async (req, res) => {
-        const meals = await productRepository.getAll(rowLimit);
+    app.get('/api/data/product/getall', async (req: AuthRequest, res) => {
+        const receivedUser = getUser(req, res);
+        if(!receivedUser) return;
+
+        const meals = await productRepository.getAll(rowLimit, receivedUser.userId);
         console.log("/api/data/product/getall");
         console.log(meals);
+        console.log('user=', req.user);
         res.status(200).json(meals);
+    });
+
+    app.get('/api/data/product/getallsuggestions/:query', async (req, res) => {
+        const receivedUser = getUser(req, res);
+        if(!receivedUser) return;
+
+        const searchQuery = req.params.query;
+        const products = await productRepository.finSuggestedProducts(searchQuery, rowLimit, receivedUser.userId);
+        console.log("/api/data/product/getallSuggestions");
+        console.log(products);
+        res.status(200).json(products);
     });
 
     app.get('/api/data/product/:id', async (req, res) => {

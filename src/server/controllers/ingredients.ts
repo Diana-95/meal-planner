@@ -1,6 +1,7 @@
 import express, { Express } from "express";
 import { ingredientRepository } from "../data";
 import { Ingredient } from "../entity/ingredient";
+import { IngredientInput } from "../data/repository/ingredients_repository";
 const rowLimit = 10;
 
 
@@ -13,7 +14,7 @@ export const registerIngredientController = (app: Express) => {
         const receivedData = req.body; // Access the sent data
 
         // validate
-        const prod: Ingredient = receivedData as Ingredient;
+        const prod = receivedData as IngredientInput;
 
         console.log("Received data:", receivedData);
         const dbResponse = await ingredientRepository.create(prod);
@@ -24,7 +25,7 @@ export const registerIngredientController = (app: Express) => {
         const receivedData = req.body; // Access the sent data
 
         // validate
-        const prod: Ingredient = receivedData as Ingredient;
+        const prod = receivedData as IngredientInput;
 
         console.log("Received data:", receivedData);
         await ingredientRepository.update(prod);

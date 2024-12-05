@@ -4,13 +4,14 @@ import { useNavigate, useRevalidator, useParams } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import { deleteMeal, updateDishoftheMeal, updateMeal } from '../../Apis/mealsApi';
+import { deleteMeal, updateDishoftheMeal, updateMeal } from '../../apis/mealsApi';
 
 import classes from './NewMeal.module.css';
 import routes from '../../routes/routes';
 import DishAutocomplete from './DishAutocomplete';
 import { Dish } from '../../types/types';
-import { getDishById } from '../../Apis/dishesApi';
+import { getAllSuggestedDishes, getDishById } from '../../apis/dishesApi';
+import Autocomplete from '../patterns/Autocomplete';
 
 const EditMeal = () => {
 
@@ -108,7 +109,11 @@ const EditMeal = () => {
                   />
                 </label>
               </div>
-              <DishAutocomplete dish={selectedDish} setDish={setSelectedDish}/>
+              <Autocomplete<Dish>
+                data={selectedDish} setData={setSelectedDish} 
+                fetchAllSuggestions={getAllSuggestedDishes}
+                CustomComponent={DishAutocomplete}
+               />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <button onClick={handleSave} style={{ padding: "10px 20px" }}>
                   Save

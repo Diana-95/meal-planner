@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useRevalidator } from 'react-router-dom';
 
 import classes from '../calendar/NewMeal.module.css';
-import { createDish } from '../../Apis/dishesApi';
+import { createDish } from '../../apis/dishesApi';
 import routes from '../../routes/routes';
+
 
 const NewDish = () => {
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const revalidator = useRevalidator();
   const [name, setName] = useState('');
   const [recipe, setRecipe] = useState('');
   const [imageUrl, setImage] = useState('');
@@ -16,6 +18,7 @@ const NewDish = () => {
     createDish(name, recipe, imageUrl)
     .then((response) => {
         console.log('save new dish', response.rowID);
+        revalidator.revalidate();
         navigate(routes.dishes);
     })
     .catch((error) => {

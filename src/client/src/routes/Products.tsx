@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLoaderData, useNavigate } from 'react-router-dom';
 
 import styles from './Groceries.module.css';
 import { Product } from '../types/types';
-import { deleteProduct, getAllProducts } from '../Apis/productsApi';
+import { deleteProduct, getAllProducts } from '../apis/productsApi';
 import routes from './routes';
 
 const Products = () => {
@@ -14,13 +14,19 @@ const Products = () => {
 
   const [products, setProducts] = useState<Product[]>(loadedProducts);
 
+  useEffect(() => {
+    // Optionally revalidate on certain conditions, or after editing
+    // e.g., re-fetch data after saving to backend
+    setProducts(loadedProducts);
+  }, [loadedProducts]);
+
   const handleAddProduct = () => {
-    // Placeholder function for adding a new product
     navigate(routes.newProduct);
     console.log("Add new product functionality to be implemented");
   };
 
   const handleDeleteProduct = (id: number) => {
+
     deleteProduct(id)
     .then(() => {
       setProducts((prevProducts) => prevProducts.filter((product) => product.id !== id));
@@ -28,7 +34,6 @@ const Products = () => {
     .catch((error) => {
       throw new Error(error)
     });
-    
   };
 
   const handlePriceChange = (id: number, price: number) => {

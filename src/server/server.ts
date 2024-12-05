@@ -6,15 +6,21 @@ import { registerMealInsert } from "./controllers/meals";
 import { registerDishController } from "./controllers/dishes";
 import { registerProductController } from "./controllers/products";
 import { registerIngredientController } from "./controllers/ingredients";
+import protectedRoutes from "./middleware/protectedRoutes";
+import { registerUserController } from "./controllers/users";
+import cookieParser from 'cookie-parser';
 
 const port = 4000;
 const expressApp: Express = express();
 
-expressApp.use(cors({ origin: 'http://localhost:3000' }));
+expressApp.use(cors({ origin: 'http://localhost:3000', credentials: true, }));
 
 expressApp.use(helmet());
 expressApp.use(express.json());
+expressApp.use(cookieParser());
+expressApp.use('/api', protectedRoutes);
 
+registerUserController(expressApp);
 registerMealInsert(expressApp);
 registerDishController(expressApp);
 registerProductController(expressApp);

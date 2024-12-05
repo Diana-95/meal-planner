@@ -1,7 +1,8 @@
 import express, { Express } from "express";
 import { mealRepository } from "../data";
-import { Meal } from "../entity/meal";
 import { MealInput } from "../data/repository/meal_repository";
+import { AuthRequest } from "../middleware/authMiddleware";
+import { getUser } from "./utils";
 const rowLimit = 10;
 
 export const registerFormMiddleware = (app: Express) => {
@@ -9,16 +10,20 @@ export const registerFormMiddleware = (app: Express) => {
 }
 
 export const registerMealInsert = (app: Express) => {
-    app.post('/api/data', async (req, res) => {
+    app.post('/api/data', async (req: AuthRequest, res) => {
         const receivedData = req.body; // Access the sent data
 
+        
+        const user = getUser(req, res);
+        if(!user) return;
         // validate
         const meal: MealInput = {
             id: 0,
             name: req.body.title,
             startDate: req.body.start,
             endDate: req.body.end,
-            dishId: req.body.dishId
+            dishId: req.body.dishId,
+            userId: user.userId
         }
 
         console.log("Received data:", receivedData);
@@ -28,16 +33,19 @@ export const registerMealInsert = (app: Express) => {
         //res.json({ message: 'Data received successfully!', receivedData });
     });
 
-    app.post('/api/data/update', async (req, res) => {
+    app.post('/api/data/update', async (req: AuthRequest, res) => {
         const receivedData = req.body; // Access the sent data
 
+        const user = getUser(req, res);
+        if(!user) return;
         // validate
         const meal: MealInput = {
             id: req.body.id,
             name: req.body.title,
             startDate: req.body.start,
             endDate: req.body.end,
-            dishId: req.body.dishId
+            dishId: req.body.dishId,
+            userId: user.userId
         }
 
         console.log("Received data:", receivedData);
@@ -76,7 +84,10 @@ app.post('/api/data/update/dish', async (req, res) => {
 
     app.get('/api/data/getall', async (req, res) => {
         console.log("/api/data/getall");
-        const meals = await mealRepository.getAll(rowLimit);
+        const user = getUser(req, res);
+        console.log(user);
+        if(!user)  return;
+        const meals = await mealRepository.getAll(rowLimit, user.userId);
 
         console.log(meals);
         res.status(200).json(meals);

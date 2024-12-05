@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useRevalidator } from 'react-router-dom';
 
 import classes from '../calendar/NewMeal.module.css';
-import { createProduct } from '../../Apis/productsApi';
+import { createProduct } from '../../apis/productsApi';
 import routes from '../../routes/routes';
 
 
 const NewProduct = () => {
     const navigate = useNavigate();
+    const revalidator = useRevalidator();
     const [name, setName] = useState('');
-    const [price, setPrice] = useState('');
-    const [measure, setMeasure] = useState('');
+    const [price, setPrice] = useState(0);
+    const [measure, setMeasure] = useState('kg');
 
     const onClickSaveHandle = () => {
-        createProduct(name, measure, parseFloat(price) )
+        createProduct(name, measure, price )
             .then((response) => {
                 console.log('Saved new product:', response.rowID);
+                revalidator.revalidate();
                 navigate(routes.products);
             })
             .catch((error) => {
@@ -44,8 +46,9 @@ const NewProduct = () => {
                     Price:
                     <input
                         type="number"
+                        step="0.5"
                         value={price}
-                        onChange={(e) => setPrice(e.target.value)}
+                        onChange={(e) => setPrice(parseFloat(e.target.value))}
                         style={{ width: '100%', margin: '8px 0' }}
                     />
                 </label>

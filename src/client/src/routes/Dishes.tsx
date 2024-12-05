@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLoaderData, useNavigate, useRevalidator } from "react-router-dom"
 
 import { Dish } from '../types/types';
-import { getAllDishes } from '../Apis/dishesApi';
+import { getAllDishes } from '../apis/dishesApi';
 import styles from '../components/recipes/Dishes.module.css';
 import routes from './routes';
 
@@ -19,8 +19,8 @@ const Dishes = () => {
       useEffect(() => {
         // Optionally revalidate on certain conditions, or after editing
         // e.g., re-fetch data after saving to backend
-        revalidator.revalidate();
-      }, []);
+        setDishes(fetchedDishes);
+      }, [fetchedDishes]);
 
       const addDish = () => {
          navigate(routes.newDish);
@@ -34,6 +34,15 @@ const Dishes = () => {
         setDishes(sortedDishes);
       };
     
+      // const updateDishes = (dish: Dish) => {
+      //   setDishes((prevDishes) => [...prevDishes, dish]);
+      // }
+
+      useEffect(() => {
+        revalidator.revalidate();
+        
+      }, []);
+
       return (
         <>
         <div className={styles.dishListContainer}>

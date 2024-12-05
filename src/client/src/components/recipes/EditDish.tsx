@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { LoaderFunctionArgs, useLoaderData, useNavigate, useRevalidator } from 'react-router-dom';
-import { deleteDish, getDishById, updateDish } from '../../Apis/dishesApi';
+import { deleteDish, getDishById, updateDish } from '../../apis/dishesApi';
 import { Dish, Ingredient, Product } from '../../types/types';
-import { getAllProducts } from '../../Apis/productsApi';
-import { addIngredient, deleteIngredient, getIngredientsByDishId } from '../../Apis/ingredientsApi';
+import { getAllSuggestedProducts } from '../../apis/productsApi';
+import { addIngredient, deleteIngredient, getIngredientsByDishId } from '../../apis/ingredientsApi';
 import styles from './EditDish.module.css';
 import routes from '../../routes/routes';
-import { deleteDishfromMeals } from '../../Apis/mealsApi';
+import { deleteDishfromMeals } from '../../apis/mealsApi';
+import Autocomplete from '../patterns/Autocomplete';
+import ProductAutocomplete from './ProductAutocomplete';
 
 const EditDish = () => {
 
@@ -18,24 +20,20 @@ const EditDish = () => {
   const [name, setName] = useState(dish.name);
   const [recipe, setRecipe] = useState(dish.recipe);
   const [imageUrl, setImage] = useState(dish.imageUrl);
-  const [products, setProducts] = useState<Product[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
-  const [quantity, setQuantity] = useState<number>(0);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
 
-  console.log('ingredients:', ingredients);
+  // console.log('ingredients:', ingredients);
   const handleAddIngredient = () => {
-    if (selectedProduct === null || quantity <= 0) return;
-
-    const product = products.find((p) => p.id === selectedProduct);
-    if (!product) return;
+    if (selectedProduct === null) return;
 
     // Add ingredient to list
-    addIngredient(product.id, dish.id, quantity)
+    addIngredient(selectedProduct.id, dish.id, quantity)
     .then((response) => {
       setIngredients((prevIngredients) => [
         ...prevIngredients,
-        { id: response.rowID, productId: product.id, dishId: dish.id, quantity}
+        { id: response.rowID, product: selectedProduct, dishId: dish.id, quantity }
       ]);
     })
     .catch()
@@ -46,15 +44,15 @@ const EditDish = () => {
   };
 
   useEffect(() => {
-    // Fetch products from the API
-    getAllProducts().then(setProducts);
-    getIngredientsByDishId(dish.id).then((ingrs) => {
-      setIngredients(ingrs);
-      console.log(ingrs);
-  });
-
+    getIngredientsByDishId(dish.id)
+    .then(setIngredients)
+    .catch((error) => {throw new Error(error)})
   }, []);
-  
+
+  useEffect(() => {
+    handleAddIngredient();
+  }, [selectedProduct]) ;
+
   const onSaveHandle = () => {
     updateDish(name,recipe, imageUrl, dish.id)
     .then(() => {
@@ -78,6 +76,7 @@ const EditDish = () => {
       deleteDish(dish.id)
     })
     .then(() => {
+      revalidator.revalidate();
       navigate(routes.dishes);
     })
     .catch((error) => {
@@ -96,10 +95,6 @@ const EditDish = () => {
       throw new Error(error);
     });
   }
-
-  const filterProductById = (id: number) => {
-    return products.find(product => product.id === id);
-  };
 
   return (
     <div className={styles.backdrop} >
@@ -133,7 +128,12 @@ const EditDish = () => {
       </label>
 
       <h3>Add Ingredients</h3>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+      <Autocomplete<Product>
+                data={selectedProduct} setData={setSelectedProduct} 
+                fetchAllSuggestions={getAllSuggestedProducts}
+                CustomComponent={ProductAutocomplete}
+               />
+      {/* <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
         <select
           value={selectedProduct || ''}
           onChange={(e) => setSelectedProduct(Number(e.target.value))}
@@ -145,16 +145,8 @@ const EditDish = () => {
               {product.name} ({product.measure})
             </option>
           ))}
-        </select>
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          placeholder="Quantity"
-          style={{ marginRight: '8px', width: '80px' }}
-        />
-        <button onClick={handleAddIngredient}>Add Ingredient</button>
-      </div>
+        </select> */}
+     
 
       <h3>Ingredients List</h3>
       <table style={{ width: '100%', marginBottom: '16px', borderCollapse: 'collapse' }}>
@@ -168,11 +160,13 @@ const EditDish = () => {
         <tbody>
           {ingredients.map((ingredient, index) => (
             <tr key={index}>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{filterProductById(ingredient.productId)?.name}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.product.name}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.quantity}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{filterProductById(ingredient.productId)?.measure}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.product.measure}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}> 
-                <button onClick={() => onIngredientDeleteHandle(ingredient.id)} />
+                <button onClick={() => onIngredientDeleteHandle(ingredient.id)}>
+                  delete
+                </button>
               </td>
             </tr>
           ))}
@@ -199,23 +193,17 @@ export default EditDish;
 
 export const dishLoader = async ({ params }: LoaderFunctionArgs): Promise<Dish> => {
     const { id } = params;
-    console.log('getDish');
-    return getDishById(Number(id))
-    .then((dish) => {
-        console.log('getDish');
-        console.log(dish);
-        const loadedDish = dish;
-        return getIngredientsByDishId(dish.id)
-        .then((ingredients) => {
-          loadedDish.ingredientList = ingredients;
-          console.log(loadedDish);
-          return loadedDish;
-        })
-        .catch()
-      })
-      .then()
-      .catch((error) => {
-        console.error('Error getting dish by id:', error);
-        throw new Error('Could not get dish by id');
-      });
+    try {
+      const dish = await getDishById(Number(id));
+      const ingredientList = await getIngredientsByDishId(dish.id);
+      const loadedDish: Dish = {
+        ...dish,
+        ingredientList
+      };
+      return loadedDish;
+    }
+    catch (error) {
+      console.error('Error getting dish by id:', error);
+      throw new Error('Could not get dish by id');
+    }
 }

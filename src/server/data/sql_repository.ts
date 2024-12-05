@@ -10,6 +10,6 @@ export abstract class SqlRepository<T, I = T> implements Repository<T,I> {
     abstract delete(id: number): Promise<void> ;
     abstract create(r: I): Promise<number> ;
     abstract update(r: I): Promise<void> ;
-    abstract getAll(limit: number): Promise<T[]> ;
+    abstract getAll(limit: number, userId?: number): Promise<T[]> ;
     abstract findById(id: number): Promise<T> ;
 }

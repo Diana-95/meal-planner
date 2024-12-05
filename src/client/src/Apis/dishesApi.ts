@@ -1,11 +1,11 @@
-import axios from 'axios';
+import { axiosInstance } from './utils';
 import { Dish } from '../types/types';
 
 
-const API_URL = 'http://localhost:4000/api/data/dish';
+const API_URL = '/dish';
 
 export const createDish = async (name: string, recipe: string, imageUrl: string) => {
-    const response = await axios.post<{ rowID: number }>(API_URL, {
+    const response = await axiosInstance.post<{ rowID: number }>(API_URL, {
       name,
       recipe,
       imageUrl,
@@ -14,7 +14,7 @@ export const createDish = async (name: string, recipe: string, imageUrl: string)
 }
 
 export const updateDish = async (name: string, recipe: string, imageUrl: string, id: number) => {
-    const response = await axios.post(API_URL.concat('/update'), {
+    const response = await axiosInstance.post(`${API_URL}/update`, {
             name,
             recipe,
             imageUrl,
@@ -24,29 +24,29 @@ export const updateDish = async (name: string, recipe: string, imageUrl: string,
 }
 
 export const deleteDish = async (id: number) => {
-  const response = await axios.post(API_URL.concat('/delete'), {
+  const response = await axiosInstance.post(`${API_URL}/delete`, {
           id
         });
   return response.data;
 }
 
 export const getAllDishes = async () => {
-    const response = await axios.get<Dish[]>(
-        API_URL.concat('/getall')
+    const response = await axiosInstance.get<Dish[]>(
+        `${API_URL}/getall`
       );
     return response.data; // The response data is an array of Meal
 }
 // getallsuggestions/:query
 export const getAllSuggestedDishes = async (query: string) => {
-  const response = await axios.get<Dish[]>(
-      API_URL.concat(`/getallsuggestions/${query}`)
+  const response = await axiosInstance.get<Dish[]>(
+      `${API_URL}/getallsuggestions/${query}`
     );
   return response.data; // The response data is an array of Meal
 }
 
 export const getDishById = async (id: number) => {
-  const response = await axios.get<Dish>(
-      API_URL.concat(`/${id}`)
+  const response = await axiosInstance.get<Dish>(
+      `${API_URL}/${id}`
     );
   return response.data; // The response data is an array of Meal
 }
