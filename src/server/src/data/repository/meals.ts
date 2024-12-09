@@ -1,4 +1,4 @@
-import { SqlRepository } from "../sql_repository";
+import { SqlRepository } from "../sql-repository";
 import { Meal } from "../../entity/meal";
 
 export type MealInput = Omit<Meal, 'dish'> & { dishId : number | null , userId: number};

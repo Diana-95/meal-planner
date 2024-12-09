@@ -86,12 +86,13 @@ export const registerUserController = (app: Express) => {
                   
             res.status(200).json({ user });
             } catch (error) {
-                res.status(500).json({ error: 'Registration failed' });
+                res.status(500).json({ error: 'Login failed' });
             }
     });
 
     app.get('/api/me', async (req: AuthRequest, res) => {
         const user = req.user;
+        //check if user is valid?
         res.status(200).json(user);
 
     });

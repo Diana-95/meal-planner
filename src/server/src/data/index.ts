@@ -1,8 +1,8 @@
-import { DishRepository } from "./repository/dish_repository";
-import { IngredientRepository } from "./repository/ingredients_repository";
-import { MealRepository } from "./repository/meal_repository";
-import { ProductRepository } from "./repository/products_repository";
-import { UserRepository } from "./repository/user_repository";
+import { DishRepository } from "./repository/dishes";
+import { IngredientRepository } from "./repository/ingredients";
+import { MealRepository } from "./repository/meals";
+import { ProductRepository } from "./repository/products";
+import { UserRepository } from "./repository/users";
 
 export const mealRepository: MealRepository = new MealRepository();
 export const dishRepository: DishRepository = new DishRepository();

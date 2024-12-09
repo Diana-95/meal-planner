@@ -1,4 +1,4 @@
-import { SqlRepository } from "../sql_repository";
+import { SqlRepository } from "../sql-repository";
 import { Dish } from "../../entity/dish";
 
 

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+/meals.db
+/meals.sql
+/reset.sql
+/src/server/scripts/reset-db.js
+/createIngredients.sql
+
+
+

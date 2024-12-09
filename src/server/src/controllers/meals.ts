@@ -1,6 +1,6 @@
 import express, { Express } from "express";
 import { mealRepository } from "../data";
-import { MealInput } from "../data/repository/meal_repository";
+import { MealInput } from "../data/repository/meals";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { getUser } from "./utils";
 const rowLimit = 10;

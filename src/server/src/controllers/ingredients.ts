@@ -1,7 +1,7 @@
 import express, { Express } from "express";
 import { ingredientRepository } from "../data";
 import { Ingredient } from "../entity/ingredient";
-import { IngredientInput } from "../data/repository/ingredients_repository";
+import { IngredientInput } from "../data/repository/ingredients";
 const rowLimit = 10;
 
 

@@ -1,4 +1,4 @@
-import { SqlRepository } from "../sql_repository";
+import { SqlRepository } from "../sql-repository";
 import { Ingredient } from "../../entity/ingredient";
 
 export type IngredientInput = Omit<Ingredient, 'product'> & { productId : number | null};
@@ -132,19 +132,6 @@ export class IngredientRepository extends SqlRepository<Ingredient, IngredientIn
                 }
             )
         })
-    }
-
-
-    async executeQuery(sql: string, params: any): Promise<Ingredient[]> {
-        return new Promise<Ingredient[]>((resolve, reject) => {
-            this.db.all<Ingredient>(sql, params, (err, rows) => {
-                if (err == undefined) {
-                    resolve(rows);
-                } else {
-                    reject(err);
-                }
-            })
-        });
     }
 
     async delete(id: number): Promise<void> {

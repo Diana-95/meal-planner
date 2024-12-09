@@ -1,6 +1,6 @@
 
 import { User } from "../../entity/user";
-import { SqlRepository } from "../sql_repository";
+import { SqlRepository } from "../sql-repository";
 
 
 

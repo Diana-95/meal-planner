@@ -1,4 +1,4 @@
-import { SqlRepository } from "../sql_repository";
+import { SqlRepository } from "../sql-repository";
 import { Product } from "../../entity/product";
 export type ProductInput = Product & { userId: number};
 

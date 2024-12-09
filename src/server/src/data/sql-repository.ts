@@ -6,6 +6,7 @@ export abstract class SqlRepository<T, I = T> implements Repository<T,I> {
     constructor() {
         this.db = new Database("meals.db");
         this.db.run('PRAGMA foreign_keys = ON;');
+        console.log('created');
     }
     abstract delete(id: number): Promise<void> ;
     abstract create(r: I): Promise<number> ;
