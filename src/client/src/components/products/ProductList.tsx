@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useLoaderData, useNavigate } from 'react-router-dom';
 
-import styles from './Groceries.module.css';
-import { Product } from '../types/types';
-import { deleteProduct, getAllProducts } from '../apis/productsApi';
-import routes from './routes';
+import styles from '../../styles/Products.module.css';
+import routes from '../../routes/routes';
+import { Product } from '../../types/types';
+import { deleteProduct } from '../../apis/productsApi';
 
-const Products = () => {
+const ProductList = () => {
 
   const loadedProducts = useLoaderData() as Product[];
   console.log(loadedProducts);
@@ -105,16 +105,4 @@ const Products = () => {
   );
 };
 
-export default Products;
-
-export const productsLoader = async () => {
-  return getAllProducts()
-  .then((prods) => {
-      console.log('get dishes', prods);
-      
-      return prods;
-  })
-  .catch((error) => {
-      throw new Error(error);
-  });
-}
+export default ProductList;

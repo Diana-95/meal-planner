@@ -4,11 +4,11 @@ import { deleteDish, getDishById, updateDish } from '../../apis/dishesApi';
 import { Dish, Ingredient, Product } from '../../types/types';
 import { getAllSuggestedProducts } from '../../apis/productsApi';
 import { addIngredient, deleteIngredient, getIngredientsByDishId } from '../../apis/ingredientsApi';
-import styles from './EditDish.module.css';
+import styles from '../../styles/EditDish.module.css';
 import routes from '../../routes/routes';
 import { deleteDishfromMeals } from '../../apis/mealsApi';
-import Autocomplete from '../patterns/Autocomplete';
-import ProductAutocomplete from './ProductAutocomplete';
+import Autocomplete from '../common/Autocomplete';
+import ProductAutocomplete from './IngredientOption';
 
 const EditDish = () => {
 

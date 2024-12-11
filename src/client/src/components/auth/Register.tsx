@@ -1,18 +1,32 @@
 // src/components/Register.tsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../context/UserContextProvider';
+import { registerUser } from '../../apis/usersApi';
+import routes from '../../routes/routes';
 
-interface RegisterProps {
-  onRegister: (username: string, email: string, password: string) => void;
-}
-
-const Register: React.FC<RegisterProps> = ({ onRegister }) => {
+const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const { setUser } = useUser();
+  
+  const handleRegister = () => {
+    console.log('Registering:', { username, email, password });
+    registerUser(username, email, password)
+    .then(({rowID}) => {
+      setUser({username, email, id: rowID});
+        navigate(routes.calendar);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onRegister(username, email, password);
+    handleRegister();
     setUsername('');
     setEmail('');
     setPassword('');

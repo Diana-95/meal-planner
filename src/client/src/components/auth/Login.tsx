@@ -1,17 +1,34 @@
 // src/components/Login.tsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-interface LoginProps {
-  onLogin: (username: string, password: string) => void;
-}
+import { loginUser } from '../../apis/usersApi';
+import { useUser } from '../../context/UserContextProvider';
+import routes from '../../routes/routes';
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-
+  const navigate = useNavigate();
+  const { setUser } = useUser();
+  
+  const handleLogin = () => {
+    console.log('Logging in:', { username, password });
+    loginUser(username, password)
+    .then((loggedUser) => {
+      // eslint-disable-next-line no-debugger
+      debugger
+      setUser({username: loggedUser.username, email: loggedUser.email, id: loggedUser.id});
+      navigate(routes.calendar);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(username, password);
+    handleLogin();
     setUsername('');
     setPassword('');
   };

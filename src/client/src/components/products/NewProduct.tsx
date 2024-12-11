@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useRevalidator } from 'react-router-dom';
 
-import classes from '../calendar/NewMeal.module.css';
+import classes from '../../styles/NewMeal.module.css';
 import { createProduct } from '../../apis/productsApi';
 import routes from '../../routes/routes';
 

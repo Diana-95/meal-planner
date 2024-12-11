@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useRevalidator } from 'react-router-dom';
 
-import classes from '../calendar/NewMeal.module.css';
+import classes from '../../styles/NewMeal.module.css';
 import { createDish } from '../../apis/dishesApi';
 import routes from '../../routes/routes';
 
 
-const NewDish = () => {
+const NewDishWindow = () => {
 
   const navigate = useNavigate();
   const revalidator = useRevalidator();
@@ -68,4 +68,4 @@ const NewDish = () => {
   );
 };
 
-export default NewDish;
+export default NewDishWindow;

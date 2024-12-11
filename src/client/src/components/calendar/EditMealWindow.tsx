@@ -1,47 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation, useRevalidator } from 'react-router-dom';
+import { useNavigate, useRevalidator, useParams } from 'react-router-dom';
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import { createMeal } from '../../apis/mealsApi';
+import { deleteMeal, updateDishoftheMeal, updateMeal } from '../../apis/mealsApi';
 
-import classes from './NewMeal.module.css';
+import classes from '../../styles/EditDish.module.css';
 import routes from '../../routes/routes';
 import DishAutocomplete from './DishAutocomplete';
 import { Dish } from '../../types/types';
 import { getAllSuggestedDishes, getDishById } from '../../apis/dishesApi';
-import Autocomplete from '../patterns/Autocomplete';
+import Autocomplete from '../common/Autocomplete';
 
-const NewMeal = () => {
+const EditMealWindow = () => {
+
   const navigate = useNavigate();
-
-  const location = useLocation();
-  const state = location.state as {start: string, end: string};
   const revalidator = useRevalidator();
-  const [title, setTitle] = useState<string>("");
-  const [start, setStart] = useState<Date | null>(new Date(state.start));
-  const [end, setEnd] = useState<Date | null>(new Date(state.end));
-  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
+  const { id, startTime, endTime, title, dish } = 
+  useParams<{ id: string, startTime: string, endTime: string, title: string, dish: string }>();
+  
+  const [eventTitle, setTitle] = useState<string>(title || '');
+  const [start, setStart] = useState<Date | null>(new Date(startTime || ''));
+  const [end, setEnd] = useState<Date | null>(new Date(endTime || ''));
+  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  
   useEffect(() => {
-    if(selectedDish?.id)
-        getDishById(selectedDish.id)
+    if(selectedDish)
+        updateDishoftheMeal(selectedDish?.id, Number(id));
+  }, [selectedDish]);
+  
+  useEffect(() => {
+    if(dish)
+        getDishById(Number(dish))
         .then(setSelectedDish)
         .catch((error) => {throw new Error(error)});
     
-  }, []);
-  
+  }, [])
+
   const handleSave = () => {
-    if (title && start && end) {
-      start.setHours(0, 0, 0, 0);
-      end.setHours(0, 0 ,0, 0);
-      console.log('selecteddish', selectedDish);
-      createMeal(start.toISOString(), end.toISOString(), title, selectedDish?.id)
+    if (eventTitle && start && end) {
+      updateMeal(start.toISOString(), end.toISOString(), eventTitle, Number(id))
       .then((response) => {
-            //  setMyMeals((prev) => [...prev, { start, end, title, id: response.rowID } as MyMeal]);
-        console.log('save new event', response.rowID);
+
         revalidator.revalidate();
+            //  setMyMeals((prev) => [...prev, { start, end, title, id: response.rowID } as MyMeal]);
+        console.log('edit event', response);
         navigate(routes.calendar);
       })
       .catch((error) => {
@@ -50,14 +55,25 @@ const NewMeal = () => {
       });
     }
   };
+
     const handleClose = () => {
       navigate(routes.calendar);
+    }
+
+    const handleDelete = () => {
+      deleteMeal(Number(id))
+      .then(() => {
+        navigate(routes.calendar);
+      })
+      .catch((error) => {
+        throw new Error(error);
+      })
     }
     return (
       <div className={classes.overlay}>
         <div className={classes.modal_window}>
         
-          <h2>New Event</h2>
+          <h2>Edit Meal</h2>
           {(
             <div>
               <div style={{ marginBottom: "10px" }}>
@@ -65,7 +81,7 @@ const NewMeal = () => {
                   Title:
                   <input
                     type="text"
-                    value={title}
+                    value={eventTitle}
                     onChange={(e) => setTitle(e.target.value)}
                     style={{ width: "100%", padding: "5px", marginTop: "5px" }}
                   />
@@ -105,6 +121,10 @@ const NewMeal = () => {
                 <button onClick={handleClose} style={{ padding: "10px 20px" }}>
                   Cancel
                 </button>
+                <button onClick={handleDelete} style={{ padding: "10px 20px" }}>
+                  Delete meal
+                </button>
+
               </div>
             </div>
           )}
@@ -112,4 +132,4 @@ const NewMeal = () => {
         </div>
       );
 }
-export default NewMeal;
+export default EditMealWindow;

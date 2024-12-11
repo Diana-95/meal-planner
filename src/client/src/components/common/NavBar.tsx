@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import routes from './routes';
-import { useUser } from '../context/UserContextProvider';
+import routes from '../../routes/routes';
+import { useUser } from '../../context/UserContextProvider';
 
 const NavBar = () => {
     const { user, setUser } = useUser();

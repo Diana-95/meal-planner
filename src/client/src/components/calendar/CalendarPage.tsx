@@ -7,9 +7,9 @@ import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/ad
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
-import { getAllMeals, updateMeal } from '../apis/mealsApi';
-import { Dish, Meal } from '../types/types';
-import routes from './routes';
+import { updateMeal } from '../../apis/mealsApi';
+import { Dish, Meal } from '../../types/types';
+import routes from '../../routes/routes';
 
 const CustomEvent = ({ event }: { event: any }) => {
   return (
@@ -166,23 +166,3 @@ const CalendarPage = () => {
 };
 
 export default CalendarPage;
-export const mealsLoader = async (): Promise<Meal[]> => {
-  return getAllMeals()
-    .then((fetchedMeals) => {
-      // setMyMeals(
-      //   fetchedMeals.map((meal: Meal) => ({
-      //     start: new Date(meal.startDate), // Ensure to format if needed
-      //     end: new Date(meal.endDate), // Ensure to format if needed
-      //     title: meal.name,
-      //     id: meal.id,
-      //   } as MyMeal))
-      // );
-      console.log('setMeals');
-      return fetchedMeals;
-      
-    })
-    .catch((error) => {
-      console.error('Error fetching meals:', error);
-      throw new Error('Could not fetch meals');
-    });
-}

@@ -1,29 +1,36 @@
-import React, { useEffect } from 'react';
-import { createBrowserRouter, RouterProvider, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { createBrowserRouter, RouterProvider} from 'react-router-dom';
 
-import CalendarPage, { mealsLoader } from './routes/CalendarPage';
+import RootPage from './routes/root'; 
 
-import EditMeal from './components/calendar/EditMeal';
-import NewMeal from './components/calendar/NewMeal';
-import ErrorPage from './components/recipes/ErrorPage';
-import Root from './routes/Root';
-import Dishes, { dishesLoader } from './routes/Dishes';
-import EditDish, { dishLoader } from './components/recipes/EditDish';
-import NewDish from './components/recipes/NewDish';
+import Authentification from './routes/root/auth';
+import AppAccess from './routes/root/app';
+import Calendar, { mealsLoader } from './routes/root/app/calendar';
+import Products, { productsLoader } from './routes/root/app/products/index';
+import Dishes, { dishesLoader } from './routes/root/app/dishes';
+
+import EditMeal from './components/calendar/EditMealWindow';
+import NewMeal from './components/calendar/NewMealWindow';
+import ErrorPage from './components/dishes/ErrorPage';
+
+
+import EditDish, { dishLoader } from './components/dishes/EditDish';
+import NewDish from './components/dishes/NewDish';
 
 import NewProduct from './components/products/NewProduct';
-import Products, { productsLoader } from './routes/Products';
-import Authentification from './routes/Authentification';
-import AppAccess from './routes/AppAccess';
+
 import { UserContextProvider } from './context/UserContextProvider';
+
+
 
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Root />,
+    element: <RootPage />,
     children: [
-      { path: '/auth',
+      { 
+        path: '/auth',
         element: <Authentification />
       },
       {
@@ -32,18 +39,21 @@ const router = createBrowserRouter([
         children: [
           {
             path: 'calendar',
-            element: <CalendarPage />,
+            element: <Calendar />,
             errorElement: <ErrorPage />,
             loader: mealsLoader,
             children: [
-            { path: 'new', element: <NewMeal /> },
-              {
-                path: 'edit/:id/:startTime/:endTime/:title/:dish',
-                element: <EditMeal />,
-                errorElement: <ErrorPage />,
-                // action: changeTodoAction,
-                // loader: todoLoader,
-              },
+            { 
+              path: 'new', 
+              element: <NewMeal /> 
+            },
+            {
+              path: 'edit/:id/:startTime/:endTime/:title/:dish',
+              element: <EditMeal />,
+              errorElement: <ErrorPage />,
+              // action: changeTodoAction,
+              // loader: todoLoader,
+            },
             ]
           },
           {
@@ -52,14 +62,16 @@ const router = createBrowserRouter([
             errorElement: <ErrorPage />,
             loader: dishesLoader,
             children: [
-              { path: 'new', element: <NewDish /> },
-                {
-                  path: 'edit/:id',
-                  element: <EditDish />,
-                  errorElement: <ErrorPage />,
-                  // action: changeTodoAction,
-                  loader: dishLoader,
-                },
+              { 
+                path: 'new', 
+                element: <NewDish /> 
+              },
+              {
+                path: 'edit/:id',
+                element: <EditDish />,
+                errorElement: <ErrorPage />,
+                loader: dishLoader,
+              },
               ]
           },
           {
@@ -68,7 +80,8 @@ const router = createBrowserRouter([
             errorElement: <ErrorPage />,
             loader: productsLoader,
             children: [
-              { path: 'new', 
+              { 
+                path: 'new', 
                 element: <NewProduct/>, 
                 errorElement: <ErrorPage />,
               }

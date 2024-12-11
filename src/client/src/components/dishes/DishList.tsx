@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLoaderData, useNavigate, useRevalidator } from "react-router-dom"
 
-import { Dish } from '../types/types';
-import { getAllDishes } from '../apis/dishesApi';
-import styles from '../components/recipes/Dishes.module.css';
-import routes from './routes';
+import { Dish } from '../../types/types';
+import styles from './Dishes.module.css';
+import routes from '../../routes/routes';
 
-
-const Dishes = () => {
+const DishList = () => {
 
     const navigate = useNavigate();
     const revalidator = useRevalidator();
@@ -63,16 +61,5 @@ const Dishes = () => {
       </>
       );
 }
-export default Dishes;
+export default DishList;
 
-export const dishesLoader = async () => {
-    return getAllDishes()
-    .then((dishes) => {
-        console.log('get dishes', dishes);
-        
-        return dishes;
-    })
-    .catch((error) => {
-        throw new Error(error);
-    });
-}
