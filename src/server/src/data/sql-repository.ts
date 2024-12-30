@@ -1,16 +1,25 @@
-import { Database } from "sqlite3";
-import { Repository } from "./repository";
+
+import { QueryParams, Repository } from "./repository";
+import knex, { Knex } from "knex";
+
 
 export abstract class SqlRepository<T, I = T> implements Repository<T,I> {
-    protected db: Database;
+    protected db: Knex;
     constructor() {
-        this.db = new Database("meals.db");
-        this.db.run('PRAGMA foreign_keys = ON;');
+        this.db = knex({
+            client: 'sqlite3',
+            connection: {
+                filename: 'meals.db' // Path to your SQLite file
+            },
+            useNullAsDefault: true // Recommended for SQLite to handle default values
+        });
+        
+        this.db.raw('PRAGMA foreign_keys = ON');
         console.log('created');
     }
-    abstract delete(id: number): Promise<void> ;
+    abstract delete(id: number, userId:  number): Promise<number> ;
     abstract create(r: I): Promise<number> ;
-    abstract update(r: I): Promise<void> ;
-    abstract getAll(limit: number, userId?: number): Promise<T[]> ;
-    abstract findById(id: number): Promise<T> ;
+    abstract update(r: I, userId:  number): Promise<void> ;
+    abstract get(cursor: number|undefined, limit: number, query?: QueryParams): Promise<T[]> ;
+    abstract getById(id: number, userId:  number): Promise<T> ; 
 }

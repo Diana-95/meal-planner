@@ -1,108 +1,86 @@
 import { SqlRepository } from "../sql-repository";
 import { Dish } from "../../entity/dish";
+import { QueryParams } from "../repository";
 
-
+export interface DishQuery extends QueryParams{
+    nameSearch?: string;
+}
 export class DishRepository extends SqlRepository<Dish> {
-    
-    async delete(id: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`
-                DELETE FROM Dishes
-                WHERE id = ?;
-            `, 
-            id,
-            function(err){
-                if (err) {
-                    console.log(err.message);
-                    reject(err.message);
-                }
-                resolve();
-                console.log(`Row(s) updated: ${this.changes}`);
-            });
-        });
+ 
+    async delete(id: number, userId: number): Promise<number> {
+        return await this.db('Dishes')
+            .where({
+                'id': id,
+                'userId':userId
+            })
+            .del();
     }
 
     async create(r: Dish): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            this.db.run('INSERT INTO Dishes (name, recipe, imageUrl, userId) VALUES (?, ?, ?, ?)', //db.run where no result needed
-                [r.name, r.recipe, r.imageUrl, r.userId],
-                function(err){
-                    if (err) {
-                        console.log(err.message);
-                        reject(err.message);
-                    }
-                    else if(this.lastID !== undefined) resolve(this.lastID);
-                    console.log(this.lastID);
-                });
-        });
-    }
-
-    async update(r: Dish): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`
-                UPDATE Dishes
-                SET name = ?, recipe = ?, imageUrl = ?
-                WHERE id = ?;
-            `, 
-            [r.name, r.recipe, r.imageUrl, r.id],
-            function(err){
-                if (err) {
-                    console.log(err.message);
-                    reject(err.message);
-                }
-                resolve();
-                console.log(`Row(s) updated: ${this.changes}`);
+        const [id] = await this.db('Dishes')
+            .insert({
+                name: r.name, 
+                recipe: r.recipe, 
+                imageUrl: r.imageUrl, 
+                userId: r.userId
             });
-        });
+        return id;
+    
     }
 
-    async getAll(limit: number, userId: number): Promise<Dish[]> { 
-        return new Promise<Dish[]>((resolve, reject) => {
-            this.db.all("SELECT * FROM Dishes WHERE userId=$userId limit $limit", //db.all returns all rows as a result
-                {$userId: userId, $limit: limit},
-                (err, rows) => {
-                    if (err) {
-                        console.error(err.message);
-                        reject(err.message);
-                        return;
-                    }
-                    console.log("getall");
-                    console.log(rows);
-                    resolve(rows as Dish[]);
-                }
-            );
+    async update(r: Dish, userId: number): Promise<void> {
+        await this.db('Dishes')
+            .where({
+                'id': r.id,
+                'userId': userId
+            })
+            .update({
+                'name': r.name,
+                'recipe': r.recipe,
+                'imageUrl': r.imageUrl
+            });
+
+    }
+
+    async updatePatch(r: Partial<Dish>, userId: number): Promise<void> {
+        const query = this.db('Dishes')
+                .where({
+                    'id': r.id,
+                    'userId': userId
         });
+        const updateFields: Record<string, any> = {};
+        if(r.imageUrl) updateFields.imageUrl = r.imageUrl;
+        if(r.name) updateFields.name = r.name;
+        if(r.recipe) updateFields.recipe = r.recipe;
+
+        await query.update(updateFields);
+    }
+
+    async get(cursor: number|undefined, limit: number, query: DishQuery): Promise<Dish[]> { 
+
+        const{ nameSearch, userId } = query;
+        const resQuery = this.db('Dishes')
+            .where('userId', userId)
+            .select('*');
+        if(nameSearch) {
+            resQuery.whereLike('name', `%${nameSearch}%`);
+        }
+        if(cursor) {
+            resQuery
+            .where('id', '>', cursor)
+            .limit(limit);
+        } 
+        const [dishes] = await resQuery;
+        return dishes;
     };
 
-    async findSuggestedDishes(query: string, limit: number, userId: number): Promise<Dish[]> {
-        return new Promise<Dish[]>((resolve, reject) => {
-            this.db.all(`SELECT * FROM Dishes
-                WHERE name LIKE $name AND userId=$userId
-                LIMIT $limit ;`, //db.all returns all rows as a result
-                {$name: `%${query}%`, $limit: limit, $userId: userId},
-                (err, rows) => {
-                    if (err) {
-                        console.error(err.message);
-                        reject(err.message);
-                        return;
-                    }
-                    console.log("getall");
-                    console.log(rows);
-                    resolve(rows as Dish[]);
-                }
-            );
-        })
-    };
-
-    async findById(id: number): Promise<Dish> {
-        return new Promise<Dish>((resolve, reject) => {
-            this.db.get("SELECT * FROM Dishes where id=$id",
-                {$id: id},
-                (error, row) => {
-                    if(error) reject(error.message);
-                    else resolve(row as Dish);
-                }
-            )
-        })
-    };
+    async getById(id: number, userId: number): Promise<Dish> {
+        return await this.db('Dishes')
+                        .select('*')
+                        .where({
+                            'id': id,
+                            'userId': userId
+                        })
+                        .first();
+    }
 }

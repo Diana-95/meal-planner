@@ -1,98 +1,80 @@
 
 import { User } from "../../entity/user";
+import { QueryParams } from "../repository";
 import { SqlRepository } from "../sql-repository";
 
 
 
 
 export class UserRepository extends SqlRepository<User> {
-    delete(id: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run('DELETE FROM Meals WHERE id = ?', [id],
-                function( error ){
-                    if (error) {
-                        console.log(error?.message);
-                        reject(error?.message);
-                    }
-                    else if(this.lastID !== undefined) resolve();
-                }
-            )
-        })
+    get(cursor: number|undefined, limit: number, query?: QueryParams): Promise<User[]> {
+        throw new Error("Method not implemented.");
     }
-    create(r: User): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            this.db.run('INSERT INTO Users (username, email, password_hash, role) VALUES (?, ?, ?, ?)', //db.run where no result needed
-                [r.username, r.email, r.password_hash, r.role ? r.role : 'user'],
-                function(err){
-                    if (err) {
-                        console.log(err.message);
-                        reject(err.message);
-                    }
-                    else if(this.lastID !== undefined) resolve(this.lastID);
-                    console.log(this.lastID);
-                });
+
+    delete(id: number): Promise<number> {
+        return this.db('Users')
+            .where('id', id)
+            .del();
+    }
+
+    async create(r: User): Promise<number> {
+        const [id] = await this.db('Users')
+            .insert({
+                username: r.username, 
+                email: r.email, 
+                password_hash: r.password_hash, 
+                role: r.role ? r.role : 'user'
         });
+        return id;
     }
-    update(r: User): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`
-                UPDATE Users
-                SET username = ?, email = ?, password_hash = ?
-                WHERE id = ?;
-            `, 
-            [r.username, r.email, r.password_hash, r.id],
-            function(err){
-                if (err) {
-                    console.log(err.message);
-                    reject(err.message);
-                }
-                resolve();
-                console.log(`Row(s) updated: ${this.changes}`);
+
+    async update(r: User): Promise<void> {
+        return await this.db('Users')
+            .where('id', r.id)
+            .update({
+                'username': r.username,
+                'email': r.email,
+                'password_hash': r.password_hash
             });
-        });
     }
+
+    async updatePart(r: Partial<User>): Promise<void> {
+        const query = this.db('Users')
+            .where('id', r.id);
+        
+        const updatedFields: Record<string, any> = {};
+        if(r.username) updatedFields.username = r.username;
+        if(r.email) updatedFields.email = r.email;
+        if(r.password_hash) updatedFields.password_hash = r.password_hash;
+        if (Object.keys(updatedFields).length > 0) {
+            await query.update(updatedFields);
+        }
+    }
+
     getAll(limit: number): Promise<User[]> {
         throw new Error("Method not implemented.");
     }
-    findById(id: number): Promise<User> {
-        return new Promise<User>((resolve, reject) => {
-            this.db.get('SELECT * FROM Users WHERE id=$id', //db.run where no result needed
-                {$id: id},
-                function(err, row){
-                    if (err) {
-                        console.log(err.message);
-                        reject(err.message);
-                    }
-                    else resolve(row as User);
-                });
-        });
+
+    async getById(id: number): Promise<User> {
+        return this.db('Users')
+                    .select('*')
+                    .where('id', id)
+                    .first();
     }
 
     findOne(username: string): Promise<User> {
-        return new Promise<User>((resolve, reject) => {
-            this.db.get("SELECT * FROM Users where username=$username",
-                {$username: username},
-                (error, row) => {
-                    if(error) reject(error.message);
-                    else resolve(row as User);
-                }
-            )
-        })
+        return this.db('Users')
+                    .select('*')
+                    .where('username', username)
+                    .first();
     }
 
-    isUserExists(username: string, email: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-        this.db.get(`SELECT COUNT(*) AS total_rows 
-                    FROM Users
-                    where username=$username or email=$email`,
-                {$username: username, $email: email},
-                (error, {total_rows}) => {
-                    if(error) reject(error.message);
-                    else resolve(total_rows > 0);
-                }
-            )
-        })
+    async isUserExists(username: string, email: string): Promise<boolean> {
+        const res =  await this.db('Users')
+                    .count('* as rows')
+                    .where('username', username)
+                    .orWhere('email', email);
+        console.log(res);
+        return Number(res[0].rows) > 0;
     }
-    
-   
 }

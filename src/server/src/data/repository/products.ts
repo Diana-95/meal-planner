@@ -1,107 +1,84 @@
 import { SqlRepository } from "../sql-repository";
 import { Product } from "../../entity/product";
+import { QueryParams } from "../repository";
 export type ProductInput = Product & { userId: number};
 
+export interface ProductQueryParams extends QueryParams {
+    searchName?: string;
+}
 export class ProductRepository extends SqlRepository<Product, ProductInput> {
 
     async create(r: Product): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            this.db.run('INSERT INTO Products (name, measure, price, userId) VALUES (?, ?, ?, ?)', //db.run where no result needed
-                [r.name, r.measure, r.price, r.userId],
-                function(err){
-                    if (err) {
-                        console.log(err.message);
-                        reject(err.message);
-                    }
-                    else if(this.lastID !== undefined) resolve(this.lastID);
-                    console.log(this.lastID);
-                });
-        });
+        const [id] = await this.db('Products').insert({ 
+                name: r.name, 
+                measure: r.measure, 
+                price: r.price, 
+                userId: r.userId});
+        return id;
+    
     }
 
-    async update(r: Product): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`
-                UPDATE Products
-                SET name = ?, price = ? measure = ?
-                WHERE id = ?;
-            `, 
-            [r.name, r.measure, r.price, r.id],
-            function(err){
-                if (err) {
-                    console.log(err.message);
-                    reject(err.message);
-                }
-                resolve();
-                console.log(`Row(s) updated: ${this.changes}`);
+    async update(r: Product, userId: number): Promise<void> {
+        await this.db('Products')
+            .where({
+                'id': r.id,
+                'userId': userId
+            })
+            .update({
+                'name': r.name,
+                'price': r.price,
+                'measure': r.measure
             });
-        });
     }
 
-    async getAll(limit: number, userId: number): Promise<Product[]> { 
-        return new Promise<Product[]>((resolve, reject) => {
-            this.db.all("SELECT * FROM Products where userId=$userId limit $limit", //db.all returns all rows as a result
-                {$limit: limit, $userId: userId},
-                (err, rows) => {
-                    if (err) {
-                        console.error(err.message);
-                        reject(err.message);
-                        return;
-                    }
-                    console.log("getall");
-                    console.log(rows);
-                    resolve(rows as Product[]);
-                }
-            );
+    async updatePatch(r: Partial<Product>, userId: number): Promise<void> {
+        const query = this.db('Products')
+        .where({
+            'id': r.id,
+            'userId': userId
         });
+        const updateFields: Record<string, any> = {};
+
+        if(r.name) updateFields.name = r.name;
+        if(r.price) updateFields.price = r.price;
+        if(r.measure) updateFields.measure = r.measure;
+        console.log(updateFields);
+        if (Object.keys(updateFields).length > 0) {
+            await query.update(updateFields);
+        }
+    }
+
+    async get(cursor: number|undefined, limit: number, query: ProductQueryParams): Promise<Product[]> {
+        const { searchName, userId } = query;
+        const resQuery = this.db('Products')
+            .where('userId', userId)
+            .select('*')
+            .limit(limit);
+        if(searchName) {
+            resQuery.whereLike('name', searchName);
+        }
+        if( cursor ) {
+            resQuery.where('id', '>', cursor);
+        }
+        return await resQuery;
     };
 
-    async finSuggestedProducts(query: string, limit: number, userId: number): Promise<Product[]> {
-        return new Promise<Product[]>((resolve, reject) => {
-            this.db.all(`SELECT * FROM Products
-                WHERE name LIKE $name AND userId=$userId
-                LIMIT $limit ;`, //db.all returns all rows as a result
-                {$name: `%${query}%`, $userId: userId, $limit: limit},
-                (err, rows) => {
-                    if (err) {
-                        console.error(err.message);
-                        reject(err.message);
-                        return;
-                    }
-                    console.log("getall");
-                    console.log(rows);
-                    resolve(rows as Product[]);
-                }
-            );
-        })
+    async getById(id: number, userId: number): Promise<Product> {
+       return await this.db('Products')
+                        .select('*')
+                        .where({
+                            'id': id,
+                            'userId':userId
+                        })
+                        .first();
     };
 
-    async findById(id: number): Promise<Product> {
-        return new Promise<Product>((resolve, reject) => {
-            this.db.get("SELECT * FROM Products where id=$id",
-                {$id: id},
-                (error, row) => {
-                    if(error) reject(error.message);
-                    else resolve(row as Product);
-                }
-            )
-        })
-    };
-
-    async delete(id: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`
-                DELETE FROM Products
-                WHERE id = ?
-            `, id,
-            function(err){
-                if (err) {
-                    console.log(err.message);
-                    reject(err.message);
-                }
-                resolve();
-                console.log(`Row(s) updated: ${this.changes}`);
-            });
-        });
+    async delete(id: number, userId: number): Promise<number> {
+        return await this.db('Products')
+            .where({
+                'id': id,
+                'userId':userId
+            })
+            .del();
     }
 }

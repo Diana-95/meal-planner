@@ -1,151 +1,97 @@
 import { SqlRepository } from "../sql-repository";
 import { Ingredient } from "../../entity/ingredient";
+import { QueryParams } from "../repository";
 
 export type IngredientInput = Omit<Ingredient, 'product'> & { productId : number | null};
-
+export interface IngredientQueryParams extends QueryParams{
+    dishId?: string;
+    productId?: string;
+}
 export class IngredientRepository extends SqlRepository<Ingredient, IngredientInput> {
-    findById(id: number): Promise<Ingredient> {
-        throw new Error("Method not implemented.");
-    }
 
     async create(r: IngredientInput): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            this.db.run('INSERT INTO Ingredients (productId, dishId, quantity) VALUES (?, ?, ?)', //db.run where no result needed
-                [r.productId, r.dishId, r.quantity],
-                function(err){
-                    if (err) {
-                        console.log(err.message);
-                        reject(err.message);
-                    }
-                    else if(this.lastID !== undefined) resolve(this.lastID);
-                    console.log(this.lastID);
-                });
-        });
+        const [id] = await this.db('Ingredients')
+                            .insert({
+                                productId: r.productId, 
+                                dishId: r.dishId, 
+                                quantity: r.quantity
+                            });
+        return id;
     }
 
     async update(r: IngredientInput): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`
-                UPDATE Ingredients
-                SET productId = ?, dishId = ?, quantity = ? 
-                WHERE id = ?;
-            `, 
-            [r.productId, r.dishId, r.quantity, r.id],
-            function(err){
-                if (err) {
-                    console.log(err.message);
-                    reject(err.message);
-                }
-                resolve();
-                console.log(`Row(s) updated: ${this.changes}`);
+        await this.db('Ingredients')
+            .where('id', r.id)
+            .update({
+                'productId': r.productId,
+                'dishId': r.dishId,
+                'quantity': r.quantity
             });
-        });
     }
 
-    async getAll(limit: number): Promise<Ingredient[]> { 
-        return new Promise<Ingredient[]>((resolve, reject) => {
-            this.db.all(
-                `SELECT Ingredients.id AS id, 
-                        Ingredients.dishId AS dishId, 
-                        Ingredients.quantity AS quantity, 
-                        Products.id AS productId, 
-                        Products.name AS productName, 
-                        Products.measure AS measure, 
-                        Products.price AS price
-                 FROM Ingredients 
-                 INNER JOIN Products ON Ingredients.productId = Products.id
-                 LIMIT $limit`,
-                { $limit: limit },
-                (err, rows) => {
-                    if (err) {
-                        console.error(err.message);
-                        reject(err.message);
-                        return;
-                    }
-                    console.log("getall");
-                    console.log(rows);
-                    resolve(
-                        rows.map((row: any) => ({
-                            id: row.id,
-                            product: {
-                                id: row.productId,
-                                name: row.productName,
-                                measure: row.measure,
-                                price: row.price,
-                                userId: row.userId
-                            },
-                            dishId: row.dishId,
-                            quantity: row.quantity
-                        }))
-                    );
-                }
+    async updatePatch(r: Partial<IngredientInput>): Promise<void> {
+        const query = this.db('Ingredients')
+            .where('id', r.id);
+
+        const updateFields: Record<string, any> = {};
+        if(r.productId) updateFields.productId = r.productId;
+        if(r.quantity) updateFields.quantity = r.quantity;
+        if(r.dishId) updateFields.dishId = r.dishId;
+        await query.update(updateFields);
+    }
+
+    async get(cursor: number| undefined, limit: number, query: IngredientQueryParams): Promise<Ingredient[]> { 
+        const {dishId, productId} = query;
+        const resQuery = this.db('Ingredients')
+            .join('Products', 'Ingredients.productId', 'Products.id')
+            .select(
+                'Ingredients.id AS id',
+                'Ingredients.dishId AS dishId',
+                'Ingredients.quantity AS quantity',
+                'Products.id AS productId',
+                'Products.name AS productName',
+                'Products.measure AS measure',
+                'Products.price AS price',
+                'Products.userId as userId'
             );
-            
-        });
+        if(dishId) {
+            resQuery.where('dishId', dishId);
+        }
+        if(productId) {
+            resQuery.where('productId', productId);
+        }
+        resQuery.limit(limit);
+        const rows = await resQuery;
+        return rows.map((row: any) => ({
+            id: row.id,
+            product: {
+                id: row.productId,
+                name: row.productName,
+                measure: row.measure,
+                price: row.price, 
+                userId: row.userId
+            },
+            dishId: row.dishId,
+            quantity: row.quantity
+        }));
     };
 
-    async findAllByDishId(id: number): Promise<Ingredient[]> {
-        return new Promise<Ingredient[]>((resolve, reject) => {
-            this.db.all(
-                `SELECT Ingredients.id AS id, 
-                        Ingredients.dishId AS dishId, 
-                        Ingredients.quantity AS quantity,
-                        Products.id AS productId, 
-                        Products.name AS productName, 
-                        Products.measure AS measure, 
-                        Products.price AS price
-                 FROM Ingredients 
-                 INNER JOIN Products ON Ingredients.productId = Products.id
-                 WHERE dishId = $id;`,
-                { $id: id },
-                (error, rows) => {
-                    if (error) {
-                        reject(error.message);
-                    } else {
-                        resolve(
-                            rows.map((row: any) => ({
-                                id: row.id,
-                                product: {
-                                    id: row.productId,
-                                    name: row.productName,
-                                    measure: row.measure,
-                                    price: row.price,
-                                    userId: row.userId
-                                },
-                                dishId: row.dishId,
-                                quantity: row.quantity
-                            }))
-                        );
-                    }
-                }
-            );
-        })
+    async getById(id: number, userId: number): Promise<Ingredient> {
+        return await this.db('Ingredients')
+                        .select('*')
+                        .where({
+                            'id': id,
+                            'userId': userId
+                        })
+                        .first();
     }
 
-    async findAllByProductId(id: number): Promise<Ingredient[]> {
-        return new Promise<Ingredient[]>((resolve, reject) => {
-            this.db.all("SELECT * FROM Ingredients where productId=$id",
-                {$id: id},
-                (error, rows) => {
-                    if(error) reject(error.message);
-                    else resolve(rows as Ingredient[]);
-                }
-            )
-        })
-    }
-
-    async delete(id: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.db.run(`DELETE FROM Ingredients WHERE id = ?`, //db.run where no result needed
-                id,
-                function(err){
-                    if (err) {
-                        console.log(err.message);
-                        reject();
-                    }
-                    resolve();
-                    console.log(this.lastID);
-                });
-        });
+    async delete(id: number, userId: number): Promise<number> {
+        return this.db('Ingredients')
+            .where({
+                'id': id,
+                'userId': userId
+            })
+            .del();
     }
 }
