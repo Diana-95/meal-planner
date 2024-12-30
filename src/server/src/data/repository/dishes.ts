@@ -70,8 +70,7 @@ export class DishRepository extends SqlRepository<Dish> {
             .where('id', '>', cursor)
             .limit(limit);
         } 
-        const [dishes] = await resQuery;
-        return dishes;
+        return await resQuery;
     };
 
     async getById(id: number, userId: number): Promise<Dish> {
