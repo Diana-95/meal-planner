@@ -1,16 +1,19 @@
 import express, { Express } from "express";
 import { ingredientRepository } from "../data";
-import { Ingredient } from "../entity/ingredient";
-import { IngredientInput } from "../data/repository/ingredients";
+import { IngredientInput, IngredientQueryParams } from "../data/repository/ingredients";
+import { idParamSchema, infoType, ingredientIdsSchema, ingredientSchema, validate } from "../middleware/inputValidationSchemas";
+import { getUser } from "./utils";
 const rowLimit = 10;
-
+const API = '/api/ingredients';
+const API_BY_ID = '/api/ingredients/:id'
 
 export const registerFormMiddleware = (app: Express) => {
     app.use(express.urlencoded({ extended: true }))
 }
 
 export const registerIngredientController = (app: Express) => {
-    app.post('/api/data/ingredient', async (req, res) => {
+    app.post(API, validate(ingredientSchema, infoType.body), 
+    async (req, res) => {
         const receivedData = req.body; // Access the sent data
 
         // validate
@@ -21,54 +24,55 @@ export const registerIngredientController = (app: Express) => {
         res.status(201).json({ rowID: dbResponse });
     });
 
-    app.post('/api/data/ingredient/update', async (req, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        // validate
-        const prod = receivedData as IngredientInput;
-
-        console.log("Received data:", receivedData);
-        await ingredientRepository.update(prod);
-        res.status(201).json();
-    });
-
-    app.post('/api/data/ingredient/delete', async (req, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        console.log("Received data:", receivedData.id);
-        await ingredientRepository.delete(receivedData.id);
-        res.status(201).json();
-    });
-
-    app.get('/api/data/ingredient/getall', async (req, res) => {
-        const meals = await ingredientRepository.getAll(rowLimit);
+    app.get(API, validate(ingredientIdsSchema, infoType.query), 
+    async (req, res) => {
+        const { dishIdP, productIdP } = req.query;
+        const queryParams: IngredientQueryParams = {
+            dishId: dishIdP as string | undefined,
+            productId: productIdP as string | undefined
+        }
+        const meals = await ingredientRepository.get(undefined, rowLimit, queryParams);
         console.log("/api/data/ingredient/getall");
         console.log(meals);
         res.status(200).json(meals);
     });
 
-    app.get('/api/data/ingredient/:id', async (req, res) => {
-        const id = Number(req.params.id);
-        const ingredient = await ingredientRepository.findById(id);
+    app.get(API_BY_ID, validate(idParamSchema, infoType.params), 
+    async (req, res) => {
+        const { id } = req.params;
+        const user = getUser(req, res);
+        if(!user) return;
+        
+        const ingredient = await ingredientRepository.getById(Number(id), user.userId);
         console.log("/api/data/get/:id");
         console.log(ingredient);
         res.status(200).json(ingredient);
     });
-    // findAllByDishId
-    app.get('/api/data/ingredient/bydish/:id', async (req, res) => {
-        const dishId = Number(req.params.id);
-        const ingredients = await ingredientRepository.findAllByDishId(dishId);
-        console.log('/api/data/ingredient/bydish/:id');
-        console.log(ingredients);
-        res.status(200).json(ingredients);
+   
+    app.put(API_BY_ID, validate(ingredientSchema, infoType.body), 
+    async (req, res) => {
+        const { id } = req.params;
+        const receivedData = req.body; // Access the sent data
+
+        // validate
+        const prod: IngredientInput = {
+            ...receivedData as IngredientInput,
+            id: Number(id)
+        }
+
+        console.log("Received data:", receivedData);
+        await ingredientRepository.update(prod);
+        res.status(204).json();
     });
-    // findAllByProductId
-    app.get('/api/data/ingredient/byproduct/:id', async (req, res) => {
-        const productId = Number(req.params.id);
-        const ingredients = await ingredientRepository.findAllByDishId(productId);
-        console.log('/api/data/ingredient/byproduct/:id');
-        console.log(ingredients);
-        res.status(200).json(ingredients);
+
+    app.delete(API_BY_ID, validate(idParamSchema, infoType.params), 
+    async (req, res) => {
+        const { id } = req.params; // Access the sent data
+        const user = getUser(req, res);
+        if(!user) return;
+        console.log("Received data:", id);
+        await ingredientRepository.delete(Number(id), user.userId);
+        res.status(201).json();
     });
 };
 

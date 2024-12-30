@@ -3,15 +3,17 @@ import { productRepository } from "../data";
 import { Product } from "../entity/product";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { getUser } from "./utils";
-const rowLimit = 10;
-
+import { ProductQueryParams } from "../data/repository/products";
+import { idParamSchema, infoType, productPatchSchema, productSchema, searchSchema, validate } from "../middleware/inputValidationSchemas";
+const API = '/api/products';
+const API_BY_ID = '/api/products/:id';
 
 export const registerFormMiddleware = (app: Express) => {
     app.use(express.urlencoded({ extended: true }))
 }
 
 export const registerProductController = (app: Express) => {
-    app.post('/api/data/product', async (req, res) => {
+    app.post(API, validate(productSchema, infoType.body), async (req, res) => {
         const receivedData = req.body; // Access the sent data
         // validate
         const receivedUser = getUser(req, res);
@@ -26,53 +28,76 @@ export const registerProductController = (app: Express) => {
         res.status(201).json({ rowID: dbResponse });
     });
 
-    app.post('/api/data/product/update', async (req, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        // validate
-        const prod: Product = receivedData as Product;
-
-        console.log("Received data:", receivedData);
-        await productRepository.update(prod);
-        res.status(201).json();
-    });
-
-    app.post('/api/data/product/delete', async (req, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        console.log("Received data:", receivedData);
-        await productRepository.delete(receivedData.id);
-        res.status(201).json();
-    });
-
-    app.get('/api/data/product/getall', async (req: AuthRequest, res) => {
+    app.get(API, validate(searchSchema, infoType.query), async (req: AuthRequest, res) => {
         const receivedUser = getUser(req, res);
         if(!receivedUser) return;
 
-        const meals = await productRepository.getAll(rowLimit, receivedUser.userId);
+        const { nameSearch, cursor = 1, limit = 10 } = req.query;
+        const queryParams: ProductQueryParams = {
+            searchName: nameSearch as string,
+            userId: receivedUser.userId
+        }
+        const meals = await productRepository.get(Number(cursor), Number(limit), queryParams);
         console.log("/api/data/product/getall");
         console.log(meals);
         console.log('user=', req.user);
         res.status(200).json(meals);
     });
 
-    app.get('/api/data/product/getallsuggestions/:query', async (req, res) => {
-        const receivedUser = getUser(req, res);
-        if(!receivedUser) return;
+    app.get(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
+        const { id } = req.params;
+        const user = getUser(req, res);
+        if(!user) return;
 
-        const searchQuery = req.params.query;
-        const products = await productRepository.finSuggestedProducts(searchQuery, rowLimit, receivedUser.userId);
-        console.log("/api/data/product/getallSuggestions");
-        console.log(products);
-        res.status(200).json(products);
-    });
-
-    app.get('/api/data/product/:id', async (req, res) => {
-        const dishId = Number(req.params.id);
-        const dish = await productRepository.findById(dishId);
+        const dish = await productRepository.getById(Number(id), user.userId);
         console.log("/api/data/get/:id");
         console.log(dish);
-        res.status(200).json(dish);
+        if(dish) res.status(200).json(dish);
+        else res.status(404).json({ error: "Resource not found" });
+    });
+
+    app.put(API_BY_ID, validate(productSchema, infoType.body), async (req, res) => {
+        const receivedData = req.body; // Access the sent data
+        const user = getUser(req, res);
+        if(!user) return;
+        // validate
+        const prod: Product = {
+            ...receivedData as Product,
+            id: Number(req.params.id)
+        };
+        console.log("prod=", prod);
+        console.log("Received data:", receivedData);
+        await productRepository.update(prod, user.userId);
+        res.status(204).json();
+    });
+
+    app.patch(API_BY_ID, validate(productPatchSchema, infoType.body), async (req, res) => {
+        const {name, price, measure} = req.body; // Access the sent data
+        const user = getUser(req, res);
+        if(!user) return;
+        // validate
+        const prod: Product = {
+            name, 
+            price,
+            measure,
+            id: Number(req.params.id),
+            userId: user.userId
+        };
+        console.log("prod=", prod);
+        await productRepository.updatePatch(prod, user.userId);
+        res.status(204).json();
+    });
+
+    app.delete(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
+        const { id } = idParamSchema.parse(req.params);
+        const user = getUser(req, res);
+        if(!user) return;
+
+        console.log("Received data:", id);
+        const deletedItems = await productRepository.delete(Number(id), user.userId);
+        if(deletedItems > 0) res.status(204).json();
+        else res.status(404).json({error: "Resource not found"});
+        
     });
 };
 

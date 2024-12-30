@@ -3,102 +3,109 @@ import { mealRepository } from "../data";
 import { MealInput } from "../data/repository/meals";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { getUser } from "./utils";
-const rowLimit = 10;
+import { idParamSchema, infoType, mealPatchSchema, mealSchema, validate } from "../middleware/inputValidationSchemas";
+const API = '/api/meals';
+const API_BY_ID = '/api/meals/:id'
 
 export const registerFormMiddleware = (app: Express) => {
     app.use(express.urlencoded({ extended: true }))
 }
 
 export const registerMealInsert = (app: Express) => {
-    app.post('/api/data', async (req: AuthRequest, res) => {
-        const receivedData = req.body; // Access the sent data
+    app.post(API, validate(mealSchema, infoType.body), async (req: AuthRequest, res) => {
+        const {name, startDate, endDate, dishId } = req.body; // Access the sent data
 
-        
         const user = getUser(req, res);
         if(!user) return;
         // validate
         const meal: MealInput = {
             id: 0,
-            name: req.body.title,
-            startDate: req.body.start,
-            endDate: req.body.end,
-            dishId: req.body.dishId,
+            name,
+            startDate,
+            endDate,
+            dishId,
             userId: user.userId
         }
 
-        console.log("Received data:", receivedData);
         const dbResponse = await mealRepository.create(meal);
         res.status(201).json({ rowID: dbResponse });
-        // Send a response back
-        //res.json({ message: 'Data received successfully!', receivedData });
     });
 
-    app.post('/api/data/update', async (req: AuthRequest, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        const user = getUser(req, res);
-        if(!user) return;
-        // validate
-        const meal: MealInput = {
-            id: req.body.id,
-            name: req.body.title,
-            startDate: req.body.start,
-            endDate: req.body.end,
-            dishId: req.body.dishId,
-            userId: user.userId
-        }
-
-        console.log("Received data:", receivedData);
-        await mealRepository.update(meal);
-        res.status(201).json();
-        // Send a response back
-        //res.json({ message: 'Data received successfully!', receivedData });
-    });
-// /update/dish
-
-app.post('/api/data/update/dish', async (req, res) => {
-    const [mealId, dishId] = [req.body.id, req.body.dishId]; // Access the sent data
-
-    console.log("Received data:", mealId);
-    await mealRepository.updateDishId(mealId, dishId);
-    res.status(201).json();
-    // Send a response back
-    //res.json({ message: 'Data received successfully!', receivedData });
-});
-
-    app.post('/api/data/delete', async (req, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        console.log("Received data:", receivedData);
-        await mealRepository.delete(receivedData.id);
-        res.status(201).json();
-    });
-    // deleteDishFromMeals
-    app.post('/api/data/deletedish', async (req, res) => {
-        const receivedData = req.body; // Access the sent data
-
-        console.log("Received data:", receivedData);
-        await mealRepository.deleteDishFromMeals(receivedData.id);
-        res.status(201).json();
-    });
-
-    app.get('/api/data/getall', async (req, res) => {
+    app.get(API, async (req, res) => {
         console.log("/api/data/getall");
         const user = getUser(req, res);
-        console.log(user);
         if(!user)  return;
-        const meals = await mealRepository.getAll(rowLimit, user.userId);
+        const meals = await mealRepository.get(undefined, 10, { userId: user.userId});
 
-        console.log(meals);
         res.status(200).json(meals);
     });
 
-    app.get('/api/data/get/:id', async (req, res) => {
-        const mealId = Number(req.params.id);
-        const meal = await mealRepository.findById(mealId);
+    app.get(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
+        const { id } = idParamSchema.parse(req.params);
+        const user = getUser(req, res);
+        if(!user) return;
+        const meal = await mealRepository.getById(Number(id), user.userId);
         console.log("/api/data/get/:id");
         console.log(meal);
         res.status(200).json(meal);
     });
+
+    app.put(
+        API_BY_ID, 
+        validate(mealSchema, infoType.body), 
+        async (req: AuthRequest, res) => {
+            const { name, startDate, endDate, dishId } = req.body; // Access the sent data
+            const { id } = idParamSchema.parse(req.params);
+
+            const user = getUser(req, res);
+            if(!user) return;
+            // validate
+            const meal: MealInput = {
+                id,
+                name,
+                startDate,
+                endDate,
+                dishId,
+                userId: user.userId
+            }
+
+            await mealRepository.update(meal);
+            res.status(204).json();
+       
+    });
+
+    app.patch(
+        API_BY_ID, 
+        validate(mealPatchSchema, infoType.body), 
+        validate(idParamSchema, infoType.params),
+        async (req: AuthRequest, res) => {
+            const { name, startDate, endDate, dishId } = req.body; // Access the sent data
+            const { id } = idParamSchema.parse(req.params);
+            const user = getUser(req, res);
+            if(!user) return;
+            // validate
+            const meal: MealInput = {
+                id,
+                name,
+                startDate,
+                endDate,
+                dishId,
+                userId: user.userId
+            }
+
+            await mealRepository.update(meal);
+            res.status(204).json();
+    });
+
+    app.delete(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
+        const { id } = req.params; // Access the sent data
+        const user = getUser(req, res);
+        if(!user) return;
+
+        console.log("Received data:", id);
+        await mealRepository.delete(Number(id), user.userId);
+        res.status(201).json();
+    });
+
 };
 
