@@ -45,10 +45,9 @@ export const mealPatchSchema = z.object({
 });
 
 export const ingredientSchema = z.object({
-    id: z.number(),
-    productId: z.number(),
-    dishId: z.number(),
-    quantity: z.number()
+    productId: z.coerce.number(),
+    dishId: z.coerce.number(),
+    quantity: z.coerce.number()
 });
 
 export const dishSchema = z.object({
@@ -74,8 +73,8 @@ export const idParamSchema = z.object({
 });
 
 export const ingredientIdsSchema = z.object({
-    dishIdP: z.number(),
-    productIdP: z.number() 
+    dishIdP: z.coerce.number().optional(),
+    productIdP: z.coerce.number().optional()
 })
 
 export function validate (schema: ZodSchema, type: infoType) {

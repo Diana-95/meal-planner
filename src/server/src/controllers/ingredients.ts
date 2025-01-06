@@ -27,6 +27,7 @@ export const registerIngredientController = (app: Express) => {
     app.get(API, validate(ingredientIdsSchema, infoType.query), 
     async (req, res) => {
         const { dishIdP, productIdP } = req.query;
+        console.log('dishId, productId:', dishIdP, productIdP)
         const queryParams: IngredientQueryParams = {
             dishId: dishIdP as string | undefined,
             productId: productIdP as string | undefined
@@ -50,6 +51,7 @@ export const registerIngredientController = (app: Express) => {
     });
    
     app.put(API_BY_ID, validate(ingredientSchema, infoType.body), 
+    validate(idParamSchema, infoType.params),
     async (req, res) => {
         const { id } = req.params;
         const receivedData = req.body; // Access the sent data
