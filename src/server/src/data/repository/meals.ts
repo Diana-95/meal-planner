@@ -1,6 +1,7 @@
 import { SqlRepository } from "../sql-repository";
 import { Meal } from "../../entity/meal";
 import { QueryParams } from "../repository";
+import { Dish } from "../../entity/dish";
 
 export type MealInput = Omit<Meal, 'dish'> & { dishId : number | null , userId: number};
 export class MealRepository extends SqlRepository<Meal, MealInput> {
@@ -61,7 +62,7 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
 
         const {userId} = query;
         const rows = await this.db('Meals')
-            .join('Dishes', 'Meals.dishId', 'Dishes.id')
+            .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
             .select(
                 'Meals.id AS mealId',
                 'Meals.name AS mealName', 
@@ -92,12 +93,35 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
     
 
     async getById(id: number, userId: number): Promise<Meal> {
-        return await this.db('Meals')
-                        .select('*')
+        const row = await this.db('Meals')
+                        .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
+                        .select('Meals.id AS mealId',
+                            'Meals.name AS mealName', 
+                            'Meals.startDate', 
+                            'Meals.endDate', 
+                            'Meals.userId as mealUserId',
+                            'Dishes.id AS dishId', 
+                            'Dishes.name AS dishName', 
+                            'Dishes.recipe AS recipe', 
+                            'Dishes.imageUrl AS imageUrl'
+                        )
                         .where({
-                            'id': id,
-                            'userId': userId
+                            'mealId': id,
+                            'mealUserId': userId
                         })
                         .first();
+        return ({
+            id: row.mealId,
+            name: row.mealName,
+            startDate: row.startDate,
+            endDate: row.endDate,
+            dish: ({
+                id: row.dishId,
+                name: row.dishName,
+                recipe: row.recipe,
+                imageUrl: row.imageUrl,
+                userId: userId
+            } as Dish)
+        } as Meal);
     }
 }
