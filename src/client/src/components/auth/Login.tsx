@@ -16,8 +16,7 @@ const Login = () => {
     console.log('Logging in:', { username, password });
     loginUser(username, password)
     .then((loggedUser) => {
-      // eslint-disable-next-line no-debugger
-      debugger
+
       setUser({username: loggedUser.username, email: loggedUser.email, id: loggedUser.id});
       navigate(routes.calendar);
     })

@@ -1,15 +1,2 @@
 node_modules
-dist
-meals.db
-meals.sql
-package-lock.json
-src/client/package-lock.json
-package-lock.json
-dist/server/server.js
-
-src/client/package-lock.json
-src/server/scripts/reset-db.js
-createIngredients.sql
-reset.sql
-package-lock.json
-src/client/package-lock.json
+dist/
