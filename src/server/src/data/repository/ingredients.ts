@@ -90,11 +90,10 @@ export class IngredientRepository extends SqlRepository<Ingredient, IngredientIn
                         .first();
     }
 
-    async delete(id: number, userId: number): Promise<number> {
+    async delete(id: number): Promise<number> {
         return this.db('Ingredients')
             .where({
-                'id': id,
-                'userId': userId
+                'id': id
             })
             .del();
     }

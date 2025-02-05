@@ -74,7 +74,7 @@ export const registerIngredientController = (app: Express) => {
         const user = getUser(req, res);
         if(!user) return;
         console.log("Received data:", id);
-        await ingredientRepository.delete(Number(id), user.userId);
+        await ingredientRepository.delete(Number(id));
         res.status(201).json();
     });
 };
