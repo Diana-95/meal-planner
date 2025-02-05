@@ -10,7 +10,7 @@ const routes = {
   dishes: '/app/dishes',
   newDish: '/app/dishes/new',
   editDish: (id: number) => `edit/${id}`,
-  editMeal: (id: string | number, start: string, end: string, title: string, dish?: Dish | null) => `edit/${id}/${start}/${end}/${title}/${dish?.id}`,
+  editMeal: (id: string | number) => `edit/${id}`,
 };
 
 export default routes;

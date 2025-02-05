@@ -1,50 +1,45 @@
-import { axiosInstance } from './utils';
+import  { axiosInstance }  from './utils';
 import { Ingredient } from '../types/types';
 
 
-const API_URL = '/ingredient';
+const API_URL = '/ingredients';
 
-export const addIngredient = async (productId: number, dishId: number, quantity: number) => {
-    const response = await axiosInstance.post<{ rowID: number }>(API_URL, {
+export const createIngredient = async (productId: number, dishId: number, quantity: number) => {
+  console.log('prId, dId, q', productId, dishId, quantity);  
+  const response = await axiosInstance.post<{ rowID: number }>(API_URL, {
       productId,
       dishId,
-      quantity,
+      quantity
     });
+    console.log('create ingredient', response.data);
     return response.data;
 }
 // not realised
 export const updateIngredient = async (productId: number, dishId: number, quantity: number, id: number) => {
-    const response = await axiosInstance.post(API_URL.concat('/update'), {
+    const response = await axiosInstance.post(`${API_URL}/${id}`, {
             productId,
             dishId,
-            quantity,
-            id
-          });
+            quantity
+        });
     return response.data;
 }
 
 export const deleteIngredient = async (id: number) => {
-  const response = await axiosInstance.post(API_URL.concat('/delete'), {
-          id
-        });
+  const response = await axiosInstance.delete(`${API_URL}/${id}`);
   return response.data;
 }
 
-export const getIngredientsByDishId = async (dishId: number) => {
+export const getIngredients = async (dishId?: number, productId?: number, searchName?: string) => {
+    const queryParams = {
+      dishId,
+      productId,
+      searchName
+    };
     const response = await axiosInstance.get<Ingredient[]>(
-        API_URL.concat(`/bydish/${dishId}`),
-        { withCredentials: true }
+        API_URL, { params: queryParams }
       );
     console.log(response.data);
     return response.data; 
 }
 
-export const getIngredientsByProductId = async (productId: number) => {
-  const response = await axiosInstance.get<Ingredient[]>(
-      API_URL.concat(`/byproduct/${productId}`),
-      { withCredentials: true }
-    );
-    console.log(response.data);
-  return response.data; // The response data is an array of Meal
-}
 

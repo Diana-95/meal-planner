@@ -1,34 +1,32 @@
-import { axiosInstance } from './utils';
+import  { axiosInstance }  from './utils';
 import { Meal } from '../types/types';
 
-
-
-
-
-export const createMeal = async (start: string, end: string, title: string, dishId?: number| null) => {
-    const response = await axiosInstance.post<{ rowID: number }>('', {
-      start,
-      end,
-      title,
-      dishId
+export const createMeal = async (startDate: string, endDate: string, name: string) => { 
+  const response = await axiosInstance.post<{ rowID: number }>('/meals', {
+      startDate,
+      endDate,
+      name
     });
     return response.data;
 }
 
-export const updateMeal = async (start: string, end: string, title: string, id: number, dishId?: number| null) => {
-    const response = await axiosInstance.post('/update', {
-            start,
-            end,
-            title,
-            id,
+export const updateMeal = async (id: number, startDate: string, endDate: string, name: string, dishId?: number| null) => {
+    const response = await axiosInstance.put(`/meals/${id}`, {
+            startDate,
+            endDate,
+            name,
             dishId
           });
+          console.log(response);
     return response.data;
 }
 
-export const updateDishoftheMeal = async (dishId: number, id: number) => {
-  const response = await axiosInstance.post('/update/dish', {
-          id,
+export const updateMealPart = async (id: number, startDate?: string, endDate?: string, name?: string, 
+  dishId?: number| null) => {
+  const response = await axiosInstance.patch<void>(`/meals/${id}`, {
+          startDate,
+          endDate,
+          name,
           dishId
         }
     );
@@ -36,24 +34,22 @@ export const updateDishoftheMeal = async (dishId: number, id: number) => {
 }
 
 export const deleteMeal = async (id: number) => {
-  const response = await axiosInstance.post('/delete', {
-          id
-        });
-  return response.data;
-}
-
-// deletedish
-export const deleteDishfromMeals = async (id: number) => {
-  const response = await axiosInstance.post('/deletedish', {
-          id
-        });
+  const response = await axiosInstance.delete(`/meals/${id}`);
   return response.data;
 }
 
 export const getAllMeals = async () => {
     const response = await axiosInstance.get<Meal[]>(
-        '/getall'
+        '/meals'
       );
-      console.log(response.data);
+    console.log(response.data);
     return response.data; // The response data is an array of Meal
+}
+
+export const getMealById = async (id: number) => {
+  const response = await axiosInstance.get<Meal>(
+      `/meals/${id}`
+    );
+    console.log(response.data);
+  return response.data; // The response data is an array of Meal
 }

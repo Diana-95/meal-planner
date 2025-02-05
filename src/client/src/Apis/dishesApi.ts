@@ -1,8 +1,8 @@
-import { axiosInstance } from './utils';
+import  { axiosInstance }  from './utils';
 import { Dish } from '../types/types';
 
 
-const API_URL = '/dish';
+const API_URL = '/dishes';
 
 export const createDish = async (name: string, recipe: string, imageUrl: string) => {
     const response = await axiosInstance.post<{ rowID: number }>(API_URL, {
@@ -14,34 +14,30 @@ export const createDish = async (name: string, recipe: string, imageUrl: string)
 }
 
 export const updateDish = async (name: string, recipe: string, imageUrl: string, id: number) => {
-    const response = await axiosInstance.post(`${API_URL}/update`, {
+    const response = await axiosInstance.put(`${API_URL}/${id}`, {
             name,
             recipe,
-            imageUrl,
-            id
+            imageUrl
           });
     return response.data;
 }
 
 export const deleteDish = async (id: number) => {
-  const response = await axiosInstance.post(`${API_URL}/delete`, {
-          id
-        });
-  return response.data;
+    const response = await axiosInstance.delete(`${API_URL}/${id}`);
+    return response.data;
 }
 
-export const getAllDishes = async () => {
+export const getAllDishes = async (cursor?: number, limit?: number, searchName?: string) => {
+    const queryParams = {
+      cursor,
+      limit,
+      searchName
+    };
+
     const response = await axiosInstance.get<Dish[]>(
-        `${API_URL}/getall`
+        API_URL, {params: queryParams}
       );
     return response.data; // The response data is an array of Meal
-}
-// getallsuggestions/:query
-export const getAllSuggestedDishes = async (query: string) => {
-  const response = await axiosInstance.get<Dish[]>(
-      `${API_URL}/getallsuggestions/${query}`
-    );
-  return response.data; // The response data is an array of Meal
 }
 
 export const getDishById = async (id: number) => {
