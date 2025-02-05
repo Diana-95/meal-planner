@@ -1,9 +1,11 @@
 import { SqlRepository } from "../sql-repository";
 import { Dish } from "../../entity/dish";
 import { QueryParams } from "../repository";
+import { Ingredient } from "../../entity/ingredient";
+import { Product } from "../../entity/product";
 
 export interface DishQuery extends QueryParams{
-    nameSearch?: string;
+    searchName?: string;
 }
 export class DishRepository extends SqlRepository<Dish> {
  
@@ -54,11 +56,11 @@ export class DishRepository extends SqlRepository<Dish> {
         if(r.recipe) updateFields.recipe = r.recipe;
 
         await query.update(updateFields);
-    }
-
+      }
+      
     async get(cursor: number|undefined, limit: number, query: DishQuery): Promise<Dish[]> { 
 
-        const{ nameSearch, userId } = query;
+        const{ searchName, userId } = query;
         const resQuery = this.db('Dishes')
             .where('userId', userId)
             .select('*');

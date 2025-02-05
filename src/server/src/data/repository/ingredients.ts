@@ -6,6 +6,7 @@ export type IngredientInput = Omit<Ingredient, 'product'> & { productId : number
 export interface IngredientQueryParams extends QueryParams{
     dishId?: string;
     productId?: string;
+    searchName?: string;
 }
 export class IngredientRepository extends SqlRepository<Ingredient, IngredientInput> {
 
@@ -41,7 +42,7 @@ export class IngredientRepository extends SqlRepository<Ingredient, IngredientIn
     }
 
     async get(cursor: number| undefined, limit: number, query: IngredientQueryParams): Promise<Ingredient[]> { 
-        const {dishId, productId} = query;
+        const {dishId, productId, searchName} = query;
         const resQuery = this.db('Ingredients')
             .join('Products', 'Ingredients.productId', 'Products.id')
             .select(
@@ -59,6 +60,9 @@ export class IngredientRepository extends SqlRepository<Ingredient, IngredientIn
         }
         if(productId) {
             resQuery.where('productId', productId);
+        }
+        if(searchName) {
+            resQuery.whereLike('productName', `%${searchName}%`)
         }
         resQuery.limit(limit);
         const rows = await resQuery;

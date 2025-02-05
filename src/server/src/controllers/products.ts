@@ -32,16 +32,17 @@ export const registerProductController = (app: Express) => {
         const receivedUser = getUser(req, res);
         if(!receivedUser) return;
 
-        const { nameSearch, cursor = 1, limit = 10 } = req.query;
+        const { searchName, cursor = 1, limit = 10 } = req.query;
+        console.log('products query', req.query);
         const queryParams: ProductQueryParams = {
-            searchName: nameSearch as string,
+            searchName: searchName as string | undefined,
             userId: receivedUser.userId
         }
-        const meals = await productRepository.get(Number(cursor), Number(limit), queryParams);
+        const products = await productRepository.get(Number(cursor), Number(limit), queryParams);
         console.log("/api/data/product/getall");
-        console.log(meals);
+        console.log(products);
         console.log('user=', req.user);
-        res.status(200).json(meals);
+        res.status(200).json(products);
     });
 
     app.get(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {

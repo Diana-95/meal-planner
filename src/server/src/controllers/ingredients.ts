@@ -26,16 +26,17 @@ export const registerIngredientController = (app: Express) => {
 
     app.get(API, validate(ingredientIdsSchema, infoType.query), 
     async (req, res) => {
-        const { dishIdP, productIdP } = req.query;
-        console.log('dishId, productId:', dishIdP, productIdP)
+        const { dishIdP, productIdP, searchName } = req.query;
+        console.log('dishId, productId:, searchName:', dishIdP, productIdP, searchName)
         const queryParams: IngredientQueryParams = {
             dishId: dishIdP as string | undefined,
-            productId: productIdP as string | undefined
+            productId: productIdP as string | undefined,
+            searchName: searchName as string | undefined
         }
-        const meals = await ingredientRepository.get(undefined, rowLimit, queryParams);
-        console.log("/api/data/ingredient/getall");
-        console.log(meals);
-        res.status(200).json(meals);
+        const ingredients = await ingredientRepository.get(undefined, rowLimit, queryParams);
+        console.log("/api/data/ingredients/getall");
+        console.log(ingredients);
+        res.status(200).json(ingredients);
     });
 
     app.get(API_BY_ID, validate(idParamSchema, infoType.params), 

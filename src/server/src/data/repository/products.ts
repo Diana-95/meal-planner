@@ -55,7 +55,7 @@ export class ProductRepository extends SqlRepository<Product, ProductInput> {
             .select('*')
             .limit(limit);
         if(searchName) {
-            resQuery.whereLike('name', searchName);
+            resQuery.whereLike('name', `%${searchName}%`);
         }
         if( cursor ) {
             resQuery.where('id', '>', cursor);
