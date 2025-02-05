@@ -4,25 +4,26 @@ import { useNavigate, useRevalidator } from 'react-router-dom';
 import classes from '../../styles/NewMeal.module.css';
 import { createProduct } from '../../apis/productsApi';
 import routes from '../../routes/routes';
+import { useApi } from '../../context/ApiContextProvider';
+import { useProducts } from '../../context/ProductsContextProvider';
+import { Product } from '../../types/types';
 
 
 const NewProduct = () => {
     const navigate = useNavigate();
-    const revalidator = useRevalidator();
+    const { api } = useApi();
+    const { setProducts } = useProducts();
     const [name, setName] = useState('');
     const [price, setPrice] = useState(0);
     const [measure, setMeasure] = useState('kg');
 
-    const onClickSaveHandle = () => {
-        createProduct(name, measure, price )
-            .then((response) => {
+    const onClickSaveHandle = async () => {
+        const response = await api.products.create(name, measure, price );
+           if(response) {
                 console.log('Saved new product:', response.rowID);
-                revalidator.revalidate();
+                setProducts(prevProds => [...prevProds, {id: response.rowID, name, measure, price} satisfies Product])
                 navigate(routes.products);
-            })
-            .catch((error) => {
-                console.error('Error saving product:', error);
-            });
+            }
     };
 
     const onCancelHandle = () => {

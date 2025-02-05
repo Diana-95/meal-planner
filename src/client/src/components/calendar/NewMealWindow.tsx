@@ -10,44 +10,58 @@ import classes from '../../styles/NewMeal.module.css';
 import routes from '../../routes/routes';
 import DishAutocomplete from './DishAutocomplete';
 import { Dish } from '../../types/types';
-import { getAllSuggestedDishes, getDishById } from '../../apis/dishesApi';
 import Autocomplete from '../common/Autocomplete';
+import { useApi } from '../../context/ApiContextProvider';
+import { useCalendarEvents } from '../../context/CalendarEventsContextProvider';
+import { MyMeal } from './CalendarPage';
 
 const NewMealWindow = () => {
   const navigate = useNavigate();
-
+  const{ api } = useApi();
   const location = useLocation();
+  const { setMyMeals } = useCalendarEvents();
   const state = location.state as {start: string, end: string};
-  const revalidator = useRevalidator();
   const [title, setTitle] = useState<string>("");
   const [start, setStart] = useState<Date | null>(new Date(state.start));
   const [end, setEnd] = useState<Date | null>(new Date(state.end));
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
+
   useEffect(() => {
-    if(selectedDish?.id)
-        getDishById(selectedDish.id)
-        .then(setSelectedDish)
-        .catch((error) => {throw new Error(error)});
+    const setDish = async () => {
+      if(selectedDish?.id){
+        const dish = await api.dishes.getById(selectedDish.id);
+        if(dish) {
+          setSelectedDish(dish);
+        }
+      }
+      setDish();
+    }
     
   }, []);
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (title && start && end) {
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0 ,0, 0);
       console.log('selecteddish', selectedDish);
-      createMeal(start.toISOString(), end.toISOString(), title, selectedDish?.id)
-      .then((response) => {
-            //  setMyMeals((prev) => [...prev, { start, end, title, id: response.rowID } as MyMeal]);
+      const response = await api.meals.create(start.toISOString(), end.toISOString(), title)
+      if(response) {
         console.log('save new event', response.rowID);
-        revalidator.revalidate();
+        setMyMeals((prev: MyMeal[]) => 
+        [...prev,
+          {
+            id: response.rowID,
+            title,
+            start,
+            end,
+            dish: selectedDish
+          } satisfies MyMeal
+        ]
+        )
         navigate(routes.calendar);
-      })
-      .catch((error) => {
-        console.error('Error sending data:', error);
-        // navigate('/', {state: {shouldRefresh: false}});
-      });
+      }
+       
     }
   };
     const handleClose = () => {
@@ -95,7 +109,7 @@ const NewMealWindow = () => {
               </div>
               <Autocomplete<Dish>
                 data={selectedDish} setData={setSelectedDish} 
-                fetchAllSuggestions={getAllSuggestedDishes}
+                fetchAllSuggestions={api.dishes.get}
                 CustomComponent={DishAutocomplete}
                />
               <div style={{ display: "flex", justifyContent: "space-between" }}>

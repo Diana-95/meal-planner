@@ -2,28 +2,31 @@ import React, { useState } from 'react';
 import { useNavigate, useRevalidator } from 'react-router-dom';
 
 import classes from '../../styles/NewMeal.module.css';
-import { createDish } from '../../apis/dishesApi';
 import routes from '../../routes/routes';
+import { useDishes } from '../../context/DishesContextProvider';
+import { Dish } from '../../types/types';
+import { useApi } from '../../context/ApiContextProvider';
 
 
 const NewDishWindow = () => {
 
   const navigate = useNavigate();
-  const revalidator = useRevalidator();
+  const { api } = useApi();
+  const { setDishes } = useDishes();
   const [name, setName] = useState('');
   const [recipe, setRecipe] = useState('');
   const [imageUrl, setImage] = useState('');
 
-  const onClickSaveHandle = () => {
-    createDish(name, recipe, imageUrl)
-    .then((response) => {
-        console.log('save new dish', response.rowID);
-        revalidator.revalidate();
+
+  const onClickSaveHandle = async () => {
+    const response = await api.dishes.create(name, recipe, imageUrl);
+    if(response !== undefined){
+        
+        setDishes((prevDishes) => 
+            [...prevDishes, ({ id: response.rowID, name, recipe, imageUrl} as Dish)]
+        )
         navigate(routes.dishes);
-    })
-    .catch((error) => {
-        console.error('Error sending data:', error);
-    });
+    }   
   }
   return (
     <div className={classes.overlay}>

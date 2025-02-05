@@ -1,24 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Outlet, useLoaderData, useNavigate, useRevalidator } from "react-router-dom"
+import { Outlet, useLoaderData, useNavigate, useRevalidator } from "react-router-dom"
 
 import { Dish } from '../../types/types';
 import styles from './Dishes.module.css';
 import routes from '../../routes/routes';
+import { useApi } from '../../context/ApiContextProvider';
+import { useDishes } from '../../context/DishesContextProvider';
 
 const DishList = () => {
 
     const navigate = useNavigate();
     const revalidator = useRevalidator();
-    
-    const fetchedDishes = useLoaderData() as Dish[];
+    const { api } = useApi();
 
-      const [dishes, setDishes] = useState<Dish[]>(fetchedDishes);
+      const { dishes, setDishes } = useDishes();
     
       useEffect(() => {
-        // Optionally revalidate on certain conditions, or after editing
-        // e.g., re-fetch data after saving to backend
-        setDishes(fetchedDishes);
-      }, [fetchedDishes]);
+        const fetchDishes = async () => {
+          const fetchedDishes = await api.dishes.get();
+          if(fetchedDishes)
+            setDishes(fetchedDishes);
+        }
+        fetchDishes();
+      }, []);
 
       const addDish = () => {
          navigate(routes.newDish);
@@ -26,7 +30,8 @@ const DishList = () => {
     
       const editDish = (id: number) => {
         navigate(routes.editDish(id));
-     };
+      };
+      
       const sortDishes = () => {
         const sortedDishes = [...dishes].sort((a, b) => a.name.localeCompare(b.name));
         setDishes(sortedDishes);
@@ -62,4 +67,3 @@ const DishList = () => {
       );
 }
 export default DishList;
-

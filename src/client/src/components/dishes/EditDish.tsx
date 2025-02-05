@@ -1,67 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import { LoaderFunctionArgs, useLoaderData, useNavigate, useRevalidator } from 'react-router-dom';
+import { LoaderFunctionArgs, useLoaderData, useNavigate, useParams, useRevalidator } from 'react-router-dom';
 import { deleteDish, getDishById, updateDish } from '../../apis/dishesApi';
 import { Dish, Ingredient, Product } from '../../types/types';
-import { getAllSuggestedProducts } from '../../apis/productsApi';
-import { addIngredient, deleteIngredient, getIngredientsByDishId } from '../../apis/ingredientsApi';
+import { deleteIngredient, getIngredients } from '../../apis/ingredientsApi';
 import styles from '../../styles/EditDish.module.css';
 import routes from '../../routes/routes';
-import { deleteDishfromMeals } from '../../apis/mealsApi';
 import Autocomplete from '../common/Autocomplete';
 import ProductAutocomplete from './IngredientOption';
+import { getAllProducts } from '../../apis/productsApi';
+import { useApi } from '../../context/ApiContextProvider';
+import { useDishes } from '../../context/DishesContextProvider';
 
 const EditDish = () => {
 
   const navigate = useNavigate();
-  const revalidator = useRevalidator();
-  
-  const dish = useLoaderData() as Dish;
+  const { id: dishId } = useParams<{ id: string }>();;
+    
 
-  const [name, setName] = useState(dish.name);
-  const [recipe, setRecipe] = useState(dish.recipe);
-  const [imageUrl, setImage] = useState(dish.imageUrl);
+  const { api } = useApi();
+  const { setDishes } = useDishes();
+
+  const [name, setName] = useState('');
+  const [recipe, setRecipe] = useState('');
+  const [imageUrl, setImage] = useState('');
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
 
   // console.log('ingredients:', ingredients);
-  const handleAddIngredient = () => {
+  const handleAddIngredient = async() => {
+    console.log('add ingredient', selectedProduct?.name);
     if (selectedProduct === null) return;
 
     // Add ingredient to list
-    addIngredient(selectedProduct.id, dish.id, quantity)
-    .then((response) => {
+    const response = await api.ingredients.create(selectedProduct.id, Number(dishId), quantity)
+    console.log('response', response);
+    console.log('response params:', selectedProduct.id, Number(dishId), quantity);
+    if(response) {
+      const newIngredient =  { id: response.rowID, product: selectedProduct, dishId: Number(dishId), quantity };
       setIngredients((prevIngredients) => [
-        ...prevIngredients,
-        { id: response.rowID, product: selectedProduct, dishId: dish.id, quantity }
-      ]);
-    })
-    .catch()
-    
-    // Clear selection
-    setSelectedProduct(null);
-    setQuantity(0);
+          ...prevIngredients,
+          newIngredient
+        ]);
+      setDishes((prevDishes: Dish[]) => (
+        prevDishes.map(item => item.id === Number(dishId)
+         ? {...item, ingredientList: [item.ingredientList, newIngredient] as Ingredient[] } satisfies Dish
+        : item)
+      ))
+      // Clear selection
+      setSelectedProduct(null);
+      setQuantity(0);
+    }
   };
 
   useEffect(() => {
-    getIngredientsByDishId(dish.id)
-    .then(setIngredients)
-    .catch((error) => {throw new Error(error)})
+    const fetchIngredients = async () => {
+      const dish = await api.dishes.getById(Number(dishId));
+      if(dish) {
+        console.log('dish:', dish);
+        if(dish.ingredientList)
+          setIngredients(dish.ingredientList);
+        else setIngredients([]);
+        setName(dish.name);
+        setImage(dish.imageUrl);
+        setRecipe(dish.recipe);
+      }
+    }
+    
+    fetchIngredients();
   }, []);
 
   useEffect(() => {
     handleAddIngredient();
   }, [selectedProduct]) ;
 
-  const onSaveHandle = () => {
-    updateDish(name,recipe, imageUrl, dish.id)
-    .then(() => {
-      revalidator.revalidate();
+  const onSaveHandle = async () => {
+    const response = await api.dishes.update(name, recipe, imageUrl, Number(dishId));
+    if(response !== undefined) {
+      setDishes(prevDishes => prevDishes.map((item) => 
+      item.id === Number(dishId) ? {...item, name, recipe, imageUrl} 
+      : item));
       navigate(routes.dishes);
-    })
-    .catch((error) => {
-      throw new Error(error);
-    });
+
+    }
 
   }
 
@@ -71,29 +92,27 @@ const EditDish = () => {
 
   const onDeleteHandle = () => {
       // todo: do you want to delete dialogue
-    deleteDishfromMeals(dish.id)
-    .then(() => {
-      deleteDish(dish.id)
-    })
-    .then(() => {
-      revalidator.revalidate();
-      navigate(routes.dishes);
-    })
-    .catch((error) => {
-      throw new Error(error);
-    });
+    const response = api.dishes.delete(Number(dishId));
+   if(response !== undefined) {
+    setDishes(prevDishes => prevDishes.filter(item => item.id !== Number(dishId)));
+    navigate(routes.dishes);
+   }
   }
 
-  const onIngredientDeleteHandle = (id: number) => {
-    deleteIngredient(id)
-    .then(() => {
+  const onIngredientDeleteHandle = async (id: number) => {
+    const response = await api.ingredients.delete(id);
+    if(response !== undefined) {
       setIngredients((prevIngredients) => 
         prevIngredients.filter((ingredient) => ingredient.id !== id)
       );
-    })
-    .catch((error) => {
-      throw new Error(error);
-    });
+      setDishes((prevDishes: Dish[]) => (
+        prevDishes.map(item => item.id === Number(id)
+         ? {...item, 
+          ingredientList: item.ingredientList.filter(ingr => ingr.id !== id) as Ingredient[] } satisfies Dish
+        : item)
+      ))
+
+    }
   }
 
   return (
@@ -130,7 +149,7 @@ const EditDish = () => {
       <h3>Add Ingredients</h3>
       <Autocomplete<Product>
                 data={selectedProduct} setData={setSelectedProduct} 
-                fetchAllSuggestions={getAllSuggestedProducts}
+                fetchAllSuggestions={getAllProducts}
                 CustomComponent={ProductAutocomplete}
                />
       {/* <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -190,20 +209,3 @@ const EditDish = () => {
 };
 
 export default EditDish;
-
-export const dishLoader = async ({ params }: LoaderFunctionArgs): Promise<Dish> => {
-    const { id } = params;
-    try {
-      const dish = await getDishById(Number(id));
-      const ingredientList = await getIngredientsByDishId(dish.id);
-      const loadedDish: Dish = {
-        ...dish,
-        ingredientList
-      };
-      return loadedDish;
-    }
-    catch (error) {
-      console.error('Error getting dish by id:', error);
-      throw new Error('Could not get dish by id');
-    }
-}

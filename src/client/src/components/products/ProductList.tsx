@@ -4,15 +4,17 @@ import { Outlet, useLoaderData, useNavigate } from 'react-router-dom';
 import styles from '../../styles/Products.module.css';
 import routes from '../../routes/routes';
 import { Product } from '../../types/types';
-import { deleteProduct } from '../../apis/productsApi';
+import { useApi } from '../../context/ApiContextProvider';
+import { useProducts } from '../../context/ProductsContextProvider';
 
 const ProductList = () => {
 
+  const { api } = useApi();
   const loadedProducts = useLoaderData() as Product[];
   console.log(loadedProducts);
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState<Product[]>(loadedProducts);
+  const { products, setProducts } = useProducts();
 
   useEffect(() => {
     // Optionally revalidate on certain conditions, or after editing
@@ -22,35 +24,36 @@ const ProductList = () => {
 
   const handleAddProduct = () => {
     navigate(routes.newProduct);
-    console.log("Add new product functionality to be implemented");
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = async (id: number) => {
 
-    deleteProduct(id)
-    .then(() => {
+    const response = await api.products.delete(id);
+    if(response !== undefined){
       setProducts((prevProducts) => prevProducts.filter((product) => product.id !== id));
-    })
-    .catch((error) => {
-      throw new Error(error)
-    });
+    }
   };
 
-  const handlePriceChange = (id: number, price: number) => {
-
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id ? { ...product, price } : product
-      )
-    );
+  const handlePriceChange = async (id: number, price: number) => {
+    const response = await api.products.updatePart(id, undefined, undefined, price);
+    if(response !== undefined) {
+      setProducts((prevProducts) =>
+        prevProducts.map((product) =>
+          product.id === id ? { ...product, price } : product
+        )
+     );
+    }
   };
 
-  const handleMeasureChange = (id: number, measure: 'kg' | 'gram' | 'piece') => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) =>
-        product.id === id ? { ...product, measure } : product
-      )
-    );
+  const handleMeasureChange = async (id: number, measure: 'kg' | 'gram' | 'piece') => {
+    const response = await api.products.updatePart(id, undefined, measure);
+    if(response !== undefined) {
+      setProducts((prevProducts) =>
+        prevProducts.map((product) =>
+          product.id === id ? { ...product, measure } : product
+        )
+      );
+    }
   };
   
   return (

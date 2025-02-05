@@ -1,11 +1,15 @@
-import React from 'react';
+
 import ProductList from '../../../../components/products/ProductList';
 import { getAllProducts } from '../../../../apis/productsApi';
+import { ProductsContextProvider } from '../../../../context/ProductsContextProvider';
 
 
 const Products = () => {
   return (
-    <ProductList />
+    <ProductsContextProvider>
+        <ProductList />
+    </ProductsContextProvider>
+    
   )
 }
 export const productsLoader = async () => {

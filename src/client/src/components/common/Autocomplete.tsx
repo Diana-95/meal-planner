@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 interface ChildComponentProps<T> {
     data: T | null;
     setData: React.Dispatch<React.SetStateAction<T | null>>;
-    fetchAllSuggestions: (query: string) => Promise<T[]>;
+    fetchAllSuggestions: (cursor?: number, limit?: number, searchName?: string) => Promise<T[] | undefined>;
     CustomComponent: React.ComponentType<{ item: T }>;  
   }
 
@@ -15,8 +15,9 @@ function Autocomplete<T>({ data, setData, fetchAllSuggestions,  CustomComponent}
 
   // fetchSuggestions
   const fetchSuggestions = async (query: string) => {
-    fetchAllSuggestions(query)
+    fetchAllSuggestions(undefined, undefined, query)
     .then((suggestedDishes) => {
+      if(suggestedDishes)
         setSuggestions(suggestedDishes);
     })
     .catch((error) => {

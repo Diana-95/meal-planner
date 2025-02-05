@@ -1,28 +1,24 @@
 import React from 'react';
 import { createBrowserRouter, RouterProvider} from 'react-router-dom';
+import { UserContextProvider } from './context/UserContextProvider';
 
 import RootPage from './routes/root'; 
 
 import Authentification from './routes/root/auth';
 import AppAccess from './routes/root/app';
-import Calendar, { mealsLoader } from './routes/root/app/calendar';
+import Calendar from './routes/root/app/calendar';
 import Products, { productsLoader } from './routes/root/app/products/index';
-import Dishes, { dishesLoader } from './routes/root/app/dishes';
+import Dishes from './routes/root/app/dishes';
 
 import EditMeal from './components/calendar/EditMealWindow';
 import NewMeal from './components/calendar/NewMealWindow';
 import ErrorPage from './components/dishes/ErrorPage';
 
 
-import EditDish, { dishLoader } from './components/dishes/EditDish';
+import EditDish from './components/dishes/EditDish';
 import NewDish from './components/dishes/NewDish';
 
 import NewProduct from './components/products/NewProduct';
-
-import { UserContextProvider } from './context/UserContextProvider';
-
-
-
 
 const router = createBrowserRouter([
   {
@@ -41,14 +37,13 @@ const router = createBrowserRouter([
             path: 'calendar',
             element: <Calendar />,
             errorElement: <ErrorPage />,
-            loader: mealsLoader,
             children: [
             { 
               path: 'new', 
               element: <NewMeal /> 
             },
             {
-              path: 'edit/:id/:startTime/:endTime/:title/:dish',
+              path: 'edit/:id',
               element: <EditMeal />,
               errorElement: <ErrorPage />,
               // action: changeTodoAction,
@@ -60,7 +55,6 @@ const router = createBrowserRouter([
             path: 'dishes',
             element: <Dishes />,
             errorElement: <ErrorPage />,
-            loader: dishesLoader,
             children: [
               { 
                 path: 'new', 
@@ -70,7 +64,6 @@ const router = createBrowserRouter([
                 path: 'edit/:id',
                 element: <EditDish />,
                 errorElement: <ErrorPage />,
-                loader: dishLoader,
               },
               ]
           },
@@ -95,9 +88,9 @@ const router = createBrowserRouter([
 
 function App() {
 
-  return <UserContextProvider>
-          <RouterProvider router={router} />
-        </UserContextProvider>
+  return  <UserContextProvider>
+            <RouterProvider router={router} />
+          </UserContextProvider>
 }
 
 export default App;
