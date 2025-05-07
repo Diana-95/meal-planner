@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation, useRevalidator } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-import { createMeal } from '../../apis/mealsApi';
 
 import classes from '../../styles/NewMeal.module.css';
 import routes from '../../routes/routes';
@@ -25,27 +23,13 @@ const NewMealWindow = () => {
   const [start, setStart] = useState<Date | null>(new Date(state.start));
   const [end, setEnd] = useState<Date | null>(new Date(state.end));
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-
-
-  useEffect(() => {
-    const setDish = async () => {
-      if(selectedDish?.id){
-        const dish = await api.dishes.getById(selectedDish.id);
-        if(dish) {
-          setSelectedDish(dish);
-        }
-      }
-      setDish();
-    }
-    
-  }, []);
   
   const handleSave = async () => {
     if (title && start && end) {
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0 ,0, 0);
       console.log('selecteddish', selectedDish);
-      const response = await api.meals.create(start.toISOString(), end.toISOString(), title)
+      const response = await api.meals.create(title, start.toISOString(), end.toISOString(), selectedDish?.id);
       if(response) {
         console.log('save new event', response.rowID);
         setMyMeals((prev: MyMeal[]) => 
@@ -75,37 +59,42 @@ const NewMealWindow = () => {
           {(
             <div>
               <div style={{ marginBottom: "10px" }}>
-                <label>
-                  Title:
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    style={{ width: "100%", padding: "5px", marginTop: "5px" }}
-                  />
+                <label htmlFor='title'>
+                  Title
                 </label>
-              </div>
-              <div style={{ marginBottom: "10px" }}>
-                <label>
-                  Start:
-                  <DatePicker
-                    selected={start}
-                    onChange={(date: Date | null) => setStart(date)}
-                    dateFormat="yyyy-MM-dd"
-              
-                  />
-                </label>
-              </div>
-              <div style={{ marginBottom: "10px" }}>
-                <label>
-                  End:
-                  <DatePicker
-                    selected={end}
-                    onChange={(date: Date | null) => setEnd(date)}
-                    dateFormat="yyyy-MM-dd"
+                <input
+                  id='title'
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  style={{ width: "100%", padding: "5px", marginTop: "5px" }}
+                />
                 
-                  />
+              </div>
+              <div style={{ marginBottom: "10px" }}>
+                <label htmlFor='start'>
+                  Start
                 </label>
+                <DatePicker
+                  id='start'
+                  selected={start}
+                  onChange={(date: Date | null) => setStart(date)}
+                  dateFormat="yyyy-MM-dd"
+            
+                />
+                
+              </div>
+              <div style={{ marginBottom: "10px" }}>
+                <label htmlFor='end'>
+                  End
+                </label>
+                <DatePicker
+                  id='end'
+                  selected={end}
+                  onChange={(date: Date | null) => setEnd(date)}
+                  dateFormat="yyyy-MM-dd"
+                />
+                
               </div>
               <Autocomplete<Dish>
                 data={selectedDish} setData={setSelectedDish} 
