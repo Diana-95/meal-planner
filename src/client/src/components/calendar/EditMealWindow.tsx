@@ -4,17 +4,13 @@ import { useNavigate, useRevalidator, useParams } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-import { deleteMeal, getMealById, updateMeal, updateMealPart } from '../../apis/mealsApi';
-
 import classes from '../../styles/NewMeal.module.css';
 import routes from '../../routes/routes';
 import DishAutocomplete from './DishAutocomplete';
 import { Dish, Meal } from '../../types/types';
-import { getAllDishes} from '../../apis/dishesApi';
 import Autocomplete from '../common/Autocomplete';
 import { useApi } from '../../context/ApiContextProvider';
 import { useCalendarEvents } from '../../context/CalendarEventsContextProvider';
-import { MyMeal } from './CalendarPage';
 
 const EditMealWindow = () => {
 
@@ -105,41 +101,45 @@ const EditMealWindow = () => {
           {(
             <div>
               <div style={{ marginBottom: "10px" }}>
-                <label>
-                  Title:
+                <label htmlFor='title'>
+                  Title
+                  </label>
                   <input
+                    id='title'
                     type="text"
                     value={eventTitle}
                     onChange={(e) => setTitle(e.target.value)}
                     style={{ width: "100%", padding: "5px", marginTop: "5px" }}
                   />
-                </label>
               </div>
               <div style={{ marginBottom: "10px" }}>
-                <label>
+                <label htmlFor='start'>
                   Start:
+                  </label>
                   <DatePicker
+                    id='start'
                     selected={start}
                     onChange={(date: Date | null) => setStart(date)}
                     dateFormat="yyyy-MM-dd"
               
                   />
-                </label>
               </div>
               <div style={{ marginBottom: "10px" }}>
-                <label>
+                <label htmlFor='end'>
                   End:
+                   </label>
                   <DatePicker
+                    id='end'
                     selected={end}
                     onChange={(date: Date | null) => setEnd(date)}
                     dateFormat="yyyy-MM-dd"
                 
                   />
-                </label>
+               
               </div>
               <Autocomplete<Dish>
                 data={selectedDish} setData={setSelectedDish} 
-                fetchAllSuggestions={getAllDishes}
+                fetchAllSuggestions={api.dishes.get}
                 CustomComponent={DishAutocomplete}
                />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
