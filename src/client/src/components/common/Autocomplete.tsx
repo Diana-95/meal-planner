@@ -9,7 +9,6 @@ interface ChildComponentProps<T> {
 
 function Autocomplete<T>({ data, setData, fetchAllSuggestions,  CustomComponent}: ChildComponentProps<T>) {
 
-  console.log(data);
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<T[]>([]);
 
@@ -39,10 +38,6 @@ function Autocomplete<T>({ data, setData, fetchAllSuggestions,  CustomComponent}
     setInputValue(''); // Set input to the selected dish name
     setSuggestions([]); // Hide suggestions
   };
-
-  // useEffect(() => {
-  //   setInputValue(data?.name ?? '');
-  // }, [dish?.name])
 
   return (
     <div style={{ position: 'relative', width: '300px' }}>
