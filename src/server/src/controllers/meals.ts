@@ -70,7 +70,7 @@ export const registerMealInsert = (app: Express) => {
             }
 
             await mealRepository.update(meal);
-            res.status(204).json();
+            res.status(204).json({ success: true });
        
     });
 
@@ -94,7 +94,7 @@ export const registerMealInsert = (app: Express) => {
             }
 
             await mealRepository.update(meal);
-            res.status(204).json();
+            res.status(204).json({ success: true });
     });
 
     app.delete(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
@@ -104,7 +104,7 @@ export const registerMealInsert = (app: Express) => {
 
         console.log("Received data:", id);
         await mealRepository.delete(Number(id), user.userId);
-        res.status(201).json();
+        res.status(201).json({ success: true });
     });
 
 };

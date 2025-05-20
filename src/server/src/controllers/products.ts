@@ -69,7 +69,7 @@ export const registerProductController = (app: Express) => {
         console.log("prod=", prod);
         console.log("Received data:", receivedData);
         await productRepository.update(prod, user.userId);
-        res.status(204).json();
+        res.status(204).json({ success: true });
     });
 
     app.patch(API_BY_ID, validate(productPatchSchema, infoType.body), async (req, res) => {
@@ -86,7 +86,7 @@ export const registerProductController = (app: Express) => {
         };
         console.log("prod=", prod);
         await productRepository.updatePatch(prod, user.userId);
-        res.status(204).json();
+        res.status(204).json({ success: true });
     });
 
     app.delete(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
@@ -96,7 +96,7 @@ export const registerProductController = (app: Express) => {
 
         console.log("Received data:", id);
         const deletedItems = await productRepository.delete(Number(id), user.userId);
-        if(deletedItems > 0) res.status(204).json();
+        if(deletedItems > 0) res.status(204).json({ success: true });
         else res.status(404).json({error: "Resource not found"});
         
     });

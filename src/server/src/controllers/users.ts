@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { userRepository } from "../data";
 import { User } from "../entity/user";
 import { AuthRequest, MyJWTPayload } from "../middleware/authMiddleware";
-import { infoType, loginSchema, registerSchema, validate } from "../middleware/inputValidationSchemas";
+import { infoType, loginSchema, registerSchema, userSchema, validate } from "../middleware/inputValidationSchemas";
 
 
 export const registerFormMiddleware = (app: Express) => {
@@ -77,9 +77,11 @@ export const registerUserController = (app: Express) => {
 
     });
 
-    app.patch('/api/users/:id', async (req: AuthRequest, res) => {
+    app.patch('/api/me', validate(userSchema, infoType.body), async (req: AuthRequest, res) => {
         const user = req.user;
-
+        if (!user) {
+            return res.status(401).json({ error: 'No user was found' });
+        }
         const { username, password, email } = req.body;
         const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
         const updateUser: Partial<User> = {
@@ -89,7 +91,25 @@ export const registerUserController = (app: Express) => {
             id: user?.userId
         }
         userRepository.updatePart(updateUser);
-        res.status(200).json(user);
+        res.status(200).json({ success: true });
+
+    });
+
+    app.put('/api/me', validate(registerSchema, infoType.body), async (req: AuthRequest, res) => {
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ error: 'No user was found' });
+        }
+        const { username, password, email } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const updateUser: User = {
+            username,
+            email,
+            password_hash:  hashedPassword,
+            id: user.userId
+        }
+        userRepository.update(updateUser);
+        res.status(200).json({ success: true });
 
     });
 }

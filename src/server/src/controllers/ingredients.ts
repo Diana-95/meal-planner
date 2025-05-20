@@ -65,7 +65,7 @@ export const registerIngredientController = (app: Express) => {
 
         console.log("Received data:", receivedData);
         await ingredientRepository.update(prod);
-        res.status(204).json();
+        res.status(204).json({ success: true });
     });
 
     app.delete(API_BY_ID, validate(idParamSchema, infoType.params), 
@@ -75,7 +75,7 @@ export const registerIngredientController = (app: Express) => {
         if(!user) return;
         console.log("Received data:", id);
         await ingredientRepository.delete(Number(id));
-        res.status(201).json();
+        res.status(201).json({ success: true });
     });
 };
 
