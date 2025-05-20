@@ -14,7 +14,7 @@ export const createDish = async (name: string, recipe: string, imageUrl: string)
 }
 
 export const updateDish = async (name: string, recipe: string, imageUrl: string, id: number) => {
-    const response = await axiosInstance.put(`${API_URL}/${id}`, {
+    const response = await axiosInstance.put<{ success: boolean} >(`${API_URL}/${id}`, {
             name,
             recipe,
             imageUrl
@@ -23,7 +23,7 @@ export const updateDish = async (name: string, recipe: string, imageUrl: string,
 }
 
 export const deleteDish = async (id: number) => {
-    const response = await axiosInstance.delete(`${API_URL}/${id}`);
+    const response = await axiosInstance.delete<{ success: boolean }>(`${API_URL}/${id}`);
     return response.data;
 }
 

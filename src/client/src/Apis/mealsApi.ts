@@ -1,11 +1,12 @@
 import  { axiosInstance }  from './utils';
 import { Meal } from '../types/types';
 
-export const createMeal = async (startDate: string, endDate: string, name: string) => { 
+export const createMeal = async (name: string, startDate: string, endDate: string, dishId?: number) => { 
   const response = await axiosInstance.post<{ rowID: number }>('/meals', {
+      name, 
       startDate,
       endDate,
-      name
+      dishId
     });
     return response.data;
 }
