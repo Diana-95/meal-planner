@@ -94,7 +94,7 @@ const EditMealWindow = () => {
       }
     }
     return (
-      <div className={classes.overlay}>
+      <div className={classes.overlay} onClick={handleClose}>
         <div className={classes.modal_window}>
         
           <h2>Edit Meal</h2>
