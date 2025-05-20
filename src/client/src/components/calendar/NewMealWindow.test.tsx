@@ -4,6 +4,7 @@ import NewMealWindow from "./NewMealWindow";
 import { Dish } from "../../types/types";
 import { useApi } from "../../context/ApiContextProvider";
 import { useCalendarEvents } from "../../context/CalendarEventsContextProvider";
+import routes from "../../routes/routes";
 
 jest.mock('../common/Autocomplete', () => ({
   __esModule: true,
@@ -123,4 +124,14 @@ describe('create new meal window', () => {
       );
   });
 
+  test('should call the close function', () => {
+    const mockNavigate = jest.fn();
+    (useNavigate as jest.Mock).mockReturnValue(mockNavigate);
+    render(<NewMealWindow />);
+    const closeButton = screen.getByRole('button', {
+      name: /cancel/i
+    });
+    fireEvent.click(closeButton);
+    expect(mockNavigate).toHaveBeenCalledWith(routes.calendar);
+  });
 });
