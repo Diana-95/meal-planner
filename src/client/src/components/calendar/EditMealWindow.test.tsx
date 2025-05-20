@@ -3,7 +3,7 @@ import EditMealWindow from "./EditMealWindow";
 import { useApi } from "../../context/ApiContextProvider";
 import { Dish, Meal } from "../../types/types";
 import { useCalendarEvents } from "../../context/CalendarEventsContextProvider";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const mockGetMealById = jest.fn();
 const mockUpdateMeal = jest.fn();
@@ -102,6 +102,9 @@ describe('EditMealWindow', () => {
         (useParams as jest.Mock).mockReturnValue({
             id: '1',
         });
+        (useNavigate as jest.Mock).mockReturnValue(
+          jest.fn()
+        );
     }
     );
     test('renders the component and handles form submission', async () => {
