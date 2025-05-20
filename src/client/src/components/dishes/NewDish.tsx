@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useRevalidator } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import classes from '../../styles/NewMeal.module.css';
 import routes from '../../routes/routes';
@@ -19,6 +19,10 @@ const NewDishWindow = () => {
 
 
   const onClickSaveHandle = async () => {
+    if(name === '' || recipe === ''){
+        alert('Please fill all fields');
+        return;
+    }
     const response = await api.dishes.create(name, recipe, imageUrl);
     if(response !== undefined){
         
@@ -28,8 +32,12 @@ const NewDishWindow = () => {
         navigate(routes.dishes);
     }   
   }
+
+    const onCLoseHandle = () => {
+        navigate(routes.dishes);
+    }
   return (
-    <div className={classes.overlay}>
+    <div data-testid="overlay" className={classes.overlay} onClick={onCLoseHandle}>
         <div className={classes.modal_window} style={{height: '400px'}}>
         <h2>Create new dish recipe</h2>
         <label>
@@ -62,7 +70,7 @@ const NewDishWindow = () => {
             <button onClick={onClickSaveHandle}  style={{ padding: '8px 12px', background: '#4CAF50', color: '#fff', border: 'none', borderRadius: '4px' }}>
             Save
             </button>
-            <button  style={{ padding: '8px 12px', background: '#f44336', color: '#fff', border: 'none', borderRadius: '4px' }}>
+            <button onClick={onCLoseHandle} style={{ padding: '8px 12px', background: '#f44336', color: '#fff', border: 'none', borderRadius: '4px' }}>
             Cancel
             </button>
         </div>

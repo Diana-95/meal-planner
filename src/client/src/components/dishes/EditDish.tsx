@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { LoaderFunctionArgs, useLoaderData, useNavigate, useParams, useRevalidator } from 'react-router-dom';
-import { deleteDish, getDishById, updateDish } from '../../apis/dishesApi';
+import { useNavigate, useParams } from 'react-router-dom';
+
 import { Dish, Ingredient, Product } from '../../types/types';
-import { deleteIngredient, getIngredients } from '../../apis/ingredientsApi';
+
 import styles from '../../styles/EditDish.module.css';
 import routes from '../../routes/routes';
 import Autocomplete from '../common/Autocomplete';
 import ProductAutocomplete from './IngredientOption';
-import { getAllProducts } from '../../apis/productsApi';
 import { useApi } from '../../context/ApiContextProvider';
 import { useDishes } from '../../context/DishesContextProvider';
 
@@ -15,7 +14,6 @@ const EditDish = () => {
 
   const navigate = useNavigate();
   const { id: dishId } = useParams<{ id: string }>();;
-    
 
   const { api } = useApi();
   const { setDishes } = useDishes();
@@ -31,26 +29,17 @@ const EditDish = () => {
   const handleAddIngredient = async() => {
     console.log('add ingredient', selectedProduct?.name);
     if (selectedProduct === null) return;
-
-    // Add ingredient to list
-    const response = await api.ingredients.create(selectedProduct.id, Number(dishId), quantity)
-    console.log('response', response);
-    console.log('response params:', selectedProduct.id, Number(dishId), quantity);
-    if(response) {
-      const newIngredient =  { id: response.rowID, product: selectedProduct, dishId: Number(dishId), quantity };
-      setIngredients((prevIngredients) => [
-          ...prevIngredients,
-          newIngredient
-        ]);
-      setDishes((prevDishes: Dish[]) => (
-        prevDishes.map(item => item.id === Number(dishId)
-         ? {...item, ingredientList: [item.ingredientList, newIngredient] as Ingredient[] } satisfies Dish
-        : item)
-      ))
-      // Clear selection
+    const newIngredient: Ingredient = {
+      id: -1,
+      product: selectedProduct,
+      dishId: Number(dishId),
+      quantity: quantity,
+    };
+    setIngredients(prevIngredients => 
+      [...prevIngredients, newIngredient]);
+  
       setSelectedProduct(null);
       setQuantity(0);
-    }
   };
 
   useEffect(() => {
@@ -66,7 +55,7 @@ const EditDish = () => {
         setRecipe(dish.recipe);
       }
     }
-    
+    console.log('dishId:', dishId);
     fetchIngredients();
   }, []);
 
@@ -74,16 +63,37 @@ const EditDish = () => {
     handleAddIngredient();
   }, [selectedProduct]) ;
 
+  const saveIngredients = async () => {
+    ingredients.forEach(async (ingredient) => {
+      const { id, product, dishId, quantity } = ingredient;
+      if(id === -1) {
+        const response = await api.ingredients.create(product.id, dishId, quantity);
+        if(response !== undefined) {
+          setIngredients((prevIngredients) =>
+          prevIngredients.map((ing) => ing.id === id ? {...ing, id: response.rowID} : ing )
+        )}
+      }
+      else {
+        const response = await api.ingredients.update(product.id, dishId, quantity, id);
+        if(response !== undefined) {
+          setIngredients((prevIngredients) =>
+            prevIngredients.map((ing) => ing.id === id ? {...ing, quantity} : ing )
+          )
+        }
+      }
+    });
+  }
+
   const onSaveHandle = async () => {
     const response = await api.dishes.update(name, recipe, imageUrl, Number(dishId));
-    if(response !== undefined) {
+    
+    if(response !== undefined) { 
+      saveIngredients();
       setDishes(prevDishes => prevDishes.map((item) => 
-      item.id === Number(dishId) ? {...item, name, recipe, imageUrl} 
-      : item));
+        item.id === Number(dishId) ? {...item, name, recipe, imageUrl, ingredientList: ingredients} satisfies Dish
+        : item));
       navigate(routes.dishes);
-
     }
-
   }
 
   const onCloseHandle = () => {
@@ -105,68 +115,53 @@ const EditDish = () => {
       setIngredients((prevIngredients) => 
         prevIngredients.filter((ingredient) => ingredient.id !== id)
       );
-      setDishes((prevDishes: Dish[]) => (
-        prevDishes.map(item => item.id === Number(id)
-         ? {...item, 
-          ingredientList: item.ingredientList.filter(ingr => ingr.id !== id) as Ingredient[] } satisfies Dish
-        : item)
-      ))
 
     }
   }
 
   return (
-    <div className={styles.backdrop} >
+    <div className={styles.backdrop} onClick={() => {onCloseHandle}} >
     <div className={styles.modal_window} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', width: '300px' }}>
       <h2>Edit Dish</h2>
-      <label>
+      <label htmlFor='name'>
         Name:
+      </label>
         <input
+          id='name'
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           style={{ width: '100%', margin: '8px 0' }}
         />
-      </label>
-      <label>
+      <label htmlFor='recipe'>
         Recipe:
+        </label>
         <textarea
+          id='recipe'
           value={recipe}
           onChange={(e) => setRecipe(e.target.value)}
           style={{ width: '100%', height: '60px', margin: '8px 0' }}
         />
-      </label>
-      <label>
+      
+      <label htmlFor='imageUrl'>
         Image URL:
+        </label>
         <input
+          id='imageUrl'
           type="text"
           value={imageUrl}
           onChange={(e) => setImage(e.target.value)}
           style={{ width: '100%', margin: '8px 0' }}
         />
-      </label>
 
       <h3>Add Ingredients</h3>
       <Autocomplete<Product>
-                data={selectedProduct} setData={setSelectedProduct} 
-                fetchAllSuggestions={getAllProducts}
+                data={selectedProduct} 
+                setData={setSelectedProduct} 
+                fetchAllSuggestions={api.products.get}
                 CustomComponent={ProductAutocomplete}
-               />
-      {/* <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-        <select
-          value={selectedProduct || ''}
-          onChange={(e) => setSelectedProduct(Number(e.target.value))}
-          style={{ marginRight: '8px', padding: '4px' }}
-        >
-          <option value="">Select product</option>
-          {products.map((product) => (
-            <option key={product.id} value={product.id}>
-              {product.name} ({product.measure})
-            </option>
-          ))}
-        </select> */}
+      />
      
-
       <h3>Ingredients List</h3>
       <table style={{ width: '100%', marginBottom: '16px', borderCollapse: 'collapse' }}>
         <thead>
@@ -180,7 +175,19 @@ const EditDish = () => {
           {ingredients.map((ingredient, index) => (
             <tr key={index}>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.product.name}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.quantity}</td>
+              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                <input
+                  type="number"
+                  value={ingredient.quantity}
+                  onChange={(e) => {
+                    setIngredients((prevIngredients) =>
+                      prevIngredients.map((ing) =>
+                        ing.id === ingredient.id ? { ...ing, quantity: Number(e.target.value) } : ing
+                      )
+                    );
+                  }}
+                />
+              </td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}>{ingredient.product.measure}</td>
               <td style={{ border: '1px solid #ddd', padding: '8px' }}> 
                 <button onClick={() => onIngredientDeleteHandle(ingredient.id)}>
