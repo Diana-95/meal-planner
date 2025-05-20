@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useContext, useEffect } from 'react';
+import React, { ReactNode, useCallback, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 import { Calendar, momentLocalizer, Event } from "react-big-calendar";
@@ -71,7 +71,7 @@ const CalendarPage = () => {
 
   const handleSelectSlot = useCallback( // add new event into the slot
     ({ start, end }: { start: Date; end: Date }) => {
-
+      console.log("Selected slot:", start, end);
       const timeToPass = {
         start: start.toISOString(),
         end: end.toISOString(),
@@ -93,6 +93,7 @@ const CalendarPage = () => {
 
   const handleEventDrop = async (dropInfo: EventInteractionArgs<MyMeal>) => {
     // Handle the drop here, update your events state
+    console.log("Event dropped:", dropInfo);
     const { event, start, end } = dropInfo;
 
     const startStr = start instanceof Date ? start.toISOString() :start;
