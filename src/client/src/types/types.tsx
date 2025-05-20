@@ -14,8 +14,8 @@ export interface Dish {
 export interface Meal {
     id: number;
     name: string;
-    startDate: number;
-    endDate: number;
+    startDate: string;
+    endDate: string;
     dish: Dish | null;
 }
 
