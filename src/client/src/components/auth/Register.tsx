@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContextProvider';
-import { registerUser } from '../../apis/usersApi';
 import routes from '../../routes/routes';
+import { useApi } from '../../context/ApiContextProvider';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -11,17 +11,15 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const { setUser } = useUser();
+  const { api } = useApi();
   
-  const handleRegister = () => {
-    console.log('Registering:', { username, email, password });
-    registerUser(username, email, password)
-    .then(({rowID}) => {
-      setUser({username, email, id: rowID});
-        navigate(routes.calendar);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+  const handleRegister = async () => {
+    const response = await api.users.create(username, email, password);
+    console.log('Mock response:', response);
+    if(response){
+      setUser({username, email, id: response.rowID});
+      navigate(routes.calendar);
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
