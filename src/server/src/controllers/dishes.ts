@@ -68,7 +68,7 @@ export const registerDishController = (app: Express) => {
 
         console.log("Received data:", receivedData);
         await dishRepository.update(dish, user.userId);
-        res.status(204).json({ success: true });
+        res.status(200).json({ success: true });
         // Send a response back
         //res.json({ message: 'Data received successfully!', receivedData });
     });
@@ -88,7 +88,7 @@ export const registerDishController = (app: Express) => {
 
         console.log("Received data:", receivedData);
         await dishRepository.updatePatch(dish, user.userId);
-        res.status(204).json({ success: true });
+        res.status(200).json({ success: true });
         // Send a response back
         //res.json({ message: 'Data received successfully!', receivedData });
     });
@@ -99,7 +99,7 @@ export const registerDishController = (app: Express) => {
         if(!user) return;
         console.log("Received data:", id);
         await dishRepository.delete(Number(id), user.userId);
-        res.status(201).json({ success: true });
+        res.status(200).json({ success: true });
         // Send a response back
         //res.json({ message: 'Data received successfully!', receivedData });
     });
