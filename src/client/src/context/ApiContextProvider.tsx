@@ -1,5 +1,5 @@
 // src/context/ApiContext.tsx
-import React, { createContext, useState, ReactNode, useContext } from 'react';
+import React, { createContext, useState, ReactNode, useContext, useMemo, useCallback } from 'react';
 
 import { createMeal, deleteMeal, getAllMeals, getMealById, updateMeal, updateMealPart } from '../apis/mealsApi';
 import { useUser } from './UserContextProvider';
@@ -9,6 +9,7 @@ import { createIngredient, deleteIngredient, getIngredients, updateIngredient } 
 import { useNavigate } from 'react-router-dom';
 import routes from '../routes/routes';
 import { loginUser, registerUser } from '../apis/usersApi';
+import { toastError } from '../components/common/toastService';
 
 interface AxiosError<T = any> extends Error {
   response?: {
@@ -42,8 +43,8 @@ export const ApiContextProvider: React.FC<ApiProviderProps> = ({ children }) => 
   const navigate = useNavigate();
 
 
-  const handleApiCall: ApiContextType['handleApiCall'] = (fn) =>
-    async (...args) => {
+  const handleApiCall: ApiContextType['handleApiCall'] = useCallback(
+    (fn: any) => async (...args: any) => {
     setLoading(true);
 
     try {
@@ -57,17 +58,19 @@ export const ApiContextProvider: React.FC<ApiProviderProps> = ({ children }) => 
         
         if((error as AxiosError).response?.status === 401) {
           setUser(null);
-          console.log('axios error');
+          toastError('You are not authorized. Please log in again.');
           navigate(routes.authentification);
         }
-       
-      }
+       else {
+          toastError(`An error occurred: ${error.message}`);
+        }
+       }
       console.log(error);
     }
     finally {
       setLoading(false);
     }
-  }
+  }, [setUser, navigate]);
 
 
 
@@ -78,13 +81,13 @@ export const ApiContextProvider: React.FC<ApiProviderProps> = ({ children }) => 
   );
 };
 export const useApi = () => {
-  const { handleApiCall } = useContext(ApiContext);
+  const { handleApiCall, loading } = useContext(ApiContext);
 
   if (!handleApiCall) {
     throw new Error('useApi should be within ApiContextProvider');
   }
 
-  const api = {
+  const api = useMemo(() => ({
     meals: {
       create: handleApiCall(createMeal),
       get: handleApiCall(getAllMeals),
@@ -121,8 +124,8 @@ export const useApi = () => {
       
     }
     // Add more entities similarly
-  };
+  }), []);
 
   
-  return { api };
+  return { api, loading };
 }

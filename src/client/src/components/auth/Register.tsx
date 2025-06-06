@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContextProvider';
 import routes from '../../routes/routes';
 import { useApi } from '../../context/ApiContextProvider';
+import { toastInfo } from '../common/toastService';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -11,13 +12,14 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const { setUser } = useUser();
-  const { api } = useApi();
+  const { api, loading } = useApi();
   
   const handleRegister = async () => {
     const response = await api.users.create(username, email, password);
     console.log('Mock response:', response);
     if(response){
       setUser({username, email, id: response.rowID});
+      toastInfo(`Welcome ${username}! Your account has been created.`);
       navigate(routes.calendar);
     }
   }
@@ -28,7 +30,6 @@ const Register = () => {
     setUsername('');
     setEmail('');
     setPassword('');
-    console.log('handle submit');
   };
 
   return (
@@ -67,7 +68,7 @@ const Register = () => {
           />
         </label>
       </div>
-      <button type="submit">Register</button>
+      <button type="submit" disabled={loading}>{loading ? 'Submitting': 'Register'}</button>
     </form>
   );
 };

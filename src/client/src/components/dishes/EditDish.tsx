@@ -9,13 +9,14 @@ import Autocomplete from '../common/Autocomplete';
 import ProductAutocomplete from './IngredientOption';
 import { useApi } from '../../context/ApiContextProvider';
 import { useDishes } from '../../context/DishesContextProvider';
+import { toastError, toastInfo } from '../common/toastService';
 
 const EditDish = () => {
 
   const navigate = useNavigate();
   const { id: dishId } = useParams<{ id: string }>();;
 
-  const { api } = useApi();
+  const { api, loading } = useApi();
   const { setDishes } = useDishes();
 
   const [name, setName] = useState('');
@@ -25,9 +26,8 @@ const EditDish = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
 
-  // console.log('ingredients:', ingredients);
   const handleAddIngredient = async() => {
-    console.log('add ingredient', selectedProduct?.name);
+   
     if (selectedProduct === null) return;
     const newIngredient: Ingredient = {
       id: -1,
@@ -46,7 +46,6 @@ const EditDish = () => {
     const fetchIngredients = async () => {
       const dish = await api.dishes.getById(Number(dishId));
       if(dish) {
-        console.log('dish:', dish);
         if(dish.ingredientList)
           setIngredients(dish.ingredientList);
         else setIngredients([]);
@@ -54,10 +53,14 @@ const EditDish = () => {
         setImage(dish.imageUrl);
         setRecipe(dish.recipe);
       }
+      else {
+        toastError('Dish not found');
+        navigate(routes.dishes);  
+      }
     }
-    console.log('dishId:', dishId);
+
     fetchIngredients();
-  }, []);
+  }, [api.dishes.getById]);
 
   useEffect(() => {
     handleAddIngredient();
@@ -92,6 +95,7 @@ const EditDish = () => {
       setDishes(prevDishes => prevDishes.map((item) => 
         item.id === Number(dishId) ? {...item, name, recipe, imageUrl, ingredientList: ingredients} satisfies Dish
         : item));
+      toastInfo(`${name} was updated`);
       navigate(routes.dishes);
     }
   }
@@ -101,12 +105,12 @@ const EditDish = () => {
   }
 
   const onDeleteHandle = () => {
-      // todo: do you want to delete dialogue
     const response = api.dishes.delete(Number(dishId));
-   if(response !== undefined) {
-    setDishes(prevDishes => prevDishes.filter(item => item.id !== Number(dishId)));
-    navigate(routes.dishes);
-   }
+    if(response !== undefined) {
+      setDishes(prevDishes => prevDishes.filter(item => item.id !== Number(dishId)));
+      toastInfo(`${name} was deleted`);
+      navigate(routes.dishes);
+    }
   }
 
   const onIngredientDeleteHandle = async (id: number) => {
@@ -114,14 +118,13 @@ const EditDish = () => {
     if(response !== undefined) {
       setIngredients((prevIngredients) => 
         prevIngredients.filter((ingredient) => ingredient.id !== id)
-      );
-
+    );
     }
   }
 
   return (
     <div className={styles.backdrop} onClick={() => {onCloseHandle}} >
-    <div className={styles.modal_window} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', width: '300px' }}>
+    <div className={styles.modal_window} onClick={(e) => e.stopPropagation()} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', width: '300px' }}>
       <h2>Edit Dish</h2>
       <label htmlFor='name'>
         Name:
@@ -200,8 +203,8 @@ const EditDish = () => {
       </table>
 
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={onSaveHandle}  style={{ padding: '8px 12px', background: '#4CAF50', color: '#fff', border: 'none', borderRadius: '4px' }}>
-          Save
+        <button onClick={onSaveHandle}  disabled={loading} style={{ padding: '8px 12px', background: '#4CAF50', color: '#fff', border: 'none', borderRadius: '4px' }}>
+          {loading ? 'Submitting' :'Save'}
         </button>
         <button onClick={onDeleteHandle} style={{ padding: '8px 12px', background: '#f44336', color: '#fff', border: 'none', borderRadius: '4px' }}>
           Delete

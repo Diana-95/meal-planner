@@ -60,26 +60,20 @@ const CalendarPage = () => {
         } as MyMeal));
         setMyMeals(loadedMyMeals);
       }
-       
-      console.log('loaded meals:', loadedMeals);
     }
-    // Optionally revalidate on certain conditions, or after editing
-    // e.g., re-fetch data after saving to backend
     loadMeals();
 
-  }, []);
+  }, [ api.meals.get ]);
 
   const handleSelectSlot = useCallback( // add new event into the slot
     ({ start, end }: { start: Date; end: Date }) => {
-      console.log("Selected slot:", start, end);
       const timeToPass = {
         start: start.toISOString(),
         end: end.toISOString(),
       };
       // Navigate with state
       navigate(routes.newMeal, { state: timeToPass });
-    },
-    []
+    }, [navigate]
   );
 
    const handleSelectEvent = useCallback((event: MyMeal) => { // edit event
@@ -89,11 +83,10 @@ const CalendarPage = () => {
 
     navigate(routes.editMeal(event.id));
 
-     }, []); 
+     }, [navigate]); 
 
   const handleEventDrop = async (dropInfo: EventInteractionArgs<MyMeal>) => {
     // Handle the drop here, update your events state
-    console.log("Event dropped:", dropInfo);
     const { event, start, end } = dropInfo;
 
     const startStr = start instanceof Date ? start.toISOString() :start;
@@ -138,7 +131,6 @@ const CalendarPage = () => {
           resizable
           onEventResize={handleResizeEvent}
           style={{ height: 800 }}
-          // defaultDate={defaultDate}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
           selectable
@@ -149,7 +141,6 @@ const CalendarPage = () => {
         />
         
         <Outlet />
-        
       </div>
   );
 };

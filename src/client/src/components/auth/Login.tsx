@@ -9,14 +9,14 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const { api } = useApi();
+  const { api, loading } = useApi();
   const { setUser } = useUser();
   
   const handleLogin = async () => {
-    console.log('Logging in:', { username, password });
-    const loggedUser = await api.users.login(username, password)
+  
+    const loggedUser = await api.users.login(username, password);
     if(loggedUser){
-      setUser({username: loggedUser.username, email: loggedUser.email, id: loggedUser.id});
+      setUser(loggedUser);
       navigate(routes.calendar);
     }
   };
@@ -29,7 +29,7 @@ const Login = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} >
       <h2>Login</h2>
       <div>
         <label>
@@ -53,7 +53,7 @@ const Login = () => {
           />
         </label>
       </div>
-      <button type="submit">Login</button>
+      <button type="submit" disabled={loading} >{loading? 'Sumbitting': 'Login'}</button>
     </form>
   );
 };

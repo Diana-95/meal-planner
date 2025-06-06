@@ -3,7 +3,6 @@ import { Dish } from '../../types/types';
 
 const DishAutocomplete: React.FC<{item: Dish}> = ({ item }) => {
 
-
   return (
         <div style={{ marginTop: '16px' }}>
           <h4>Selected Dish:</h4>

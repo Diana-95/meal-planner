@@ -12,24 +12,21 @@ function Autocomplete<T>({ data, setData, fetchAllSuggestions,  CustomComponent}
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<T[]>([]);
 
-  // fetchSuggestions
   const fetchSuggestions = async (query: string) => {
-    fetchAllSuggestions(undefined, undefined, query)
-    .then((suggestedDishes) => {
-      if(suggestedDishes)
+    const suggestedDishes = await fetchAllSuggestions(undefined, undefined, query);
+    if(suggestedDishes)
         setSuggestions(suggestedDishes);
-    })
-    .catch((error) => {
-        console.error('Error fetching suggestions:', error);
-    });
+    
   }
- // event: React.ChangeEvent<HTMLInputElement>
+
   const handleInputChange = ({ target: {value}} : React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Input changed:', value);
     setInputValue(value);
-    if (value.length >= 2) { // Fetch suggestions for 2 or more characters
+    if (value.length >= 3) { // Fetch suggestions for 3 or more characters
       fetchSuggestions(value);
-    } else {
-      setSuggestions([]);
+    } 
+    else {
+      setSuggestions([]); // Clear suggestions if input is less than 3 characters
     }
   };
 

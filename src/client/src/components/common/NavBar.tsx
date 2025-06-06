@@ -5,7 +5,7 @@ import { useUser } from '../../context/UserContextProvider';
 
 const NavBar = () => {
     const { user, setUser } = useUser();
-    console.log(user);
+   
     return (
         <nav style={{ position: 'fixed', zIndex:'100', display: 'flex', flexDirection: 'row', padding: '10px', background: '#eee', borderBottom: '1px solid #ccc' }}>
             <Link to={routes.home} style={{ marginRight: '10px' }}> Home </Link>

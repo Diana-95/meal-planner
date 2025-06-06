@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate, useRevalidator } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import classes from '../../styles/NewMeal.module.css';
-import { createProduct } from '../../apis/productsApi';
 import routes from '../../routes/routes';
 import { useApi } from '../../context/ApiContextProvider';
 import { useProducts } from '../../context/ProductsContextProvider';
 import { Product } from '../../types/types';
+import { toastError, toastInfo } from '../common/toastService';
 
 
 const NewProduct = () => {
     const navigate = useNavigate();
-    const { api } = useApi();
+    const { api, loading } = useApi();
     const { setProducts } = useProducts();
     const [name, setName] = useState('');
     const [price, setPrice] = useState(0);
@@ -19,11 +19,13 @@ const NewProduct = () => {
 
     const onClickSaveHandle = async () => {
         const response = await api.products.create(name, measure, price );
-           if(response) {
-                console.log('Saved new product:', response.rowID);
-                setProducts(prevProds => [...prevProds, {id: response.rowID, name, measure, price} satisfies Product])
-                navigate(routes.products);
-            }
+        if(response) {
+            toastInfo(`New product "${name}" was created`);
+            setProducts(prevProds => [...prevProds, {id: response.rowID, name, measure, price} satisfies Product])
+            
+        }
+        else { toastError('Failed to create product. Please try again.'); }
+        navigate(routes.products);
     };
 
     const onCancelHandle = () => {
@@ -31,8 +33,8 @@ const NewProduct = () => {
     };
 
     return (
-        <div className={classes.overlay}>
-            <div className={classes.modal_window} style={{ height: '400px' }}>
+        <div className={classes.overlay} onClick={onCancelHandle}>
+            <div className={classes.modal_window} style={{ height: '400px' }} onClick={(e) => e.stopPropagation()}>
                 <h2>Create New Product</h2>
                 <label>
                     Name:
@@ -70,6 +72,7 @@ const NewProduct = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <button
                         onClick={onClickSaveHandle}
+                        disabled={loading || !name || price <= 0}
                         style={{
                             padding: '8px 12px',
                             background: '#4CAF50',
@@ -78,7 +81,7 @@ const NewProduct = () => {
                             borderRadius: '4px'
                         }}
                     >
-                        Save
+                        {loading ? 'Saving...' : 'Save'}
                     </button>
                     <button
                         onClick={onCancelHandle}
