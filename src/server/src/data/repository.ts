@@ -1,6 +1,9 @@
 
 export interface QueryParams {
     userId?: number;
+    startDate?: string;
+    endDate?: string;
+    searchName?: string;
 }
 export interface Repository<T, I=T> {
     create(r: I): Promise<number>;

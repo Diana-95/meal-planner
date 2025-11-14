@@ -11,15 +11,20 @@ const Authentification: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   return (
-    <div>
+    <div className="relative">
       {isRegistering ? (
         <Register  />
       ) : (
         <Login />
       )}
-      <button onClick={() => setIsRegistering(!isRegistering)}>
-        {isRegistering ? 'Already have an account? Login' : 'Create an account'}
-      </button>
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+        <button 
+          onClick={() => setIsRegistering(!isRegistering)}
+          className="text-sm text-gray-600 hover:text-primary-600 transition-colors"
+        >
+          {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
+      </div>
     </div>
   );
 };

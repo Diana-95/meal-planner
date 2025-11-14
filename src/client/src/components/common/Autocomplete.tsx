@@ -37,38 +37,21 @@ function Autocomplete<T>({ data, setData, fetchAllSuggestions,  CustomComponent}
   };
 
   return (
-    <div style={{ position: 'relative', width: '300px' }}>
+    <div className="relative w-full">
       <input
         type="text"
         value={inputValue}
         onChange={handleInputChange}
-        placeholder="Search for a dish..."
-        style={{ width: '100%', padding: '8px' }}
+        placeholder="Search..."
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
       />
       {suggestions.length > 0 && (
-        <ul
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            border: '1px solid #ccc',
-            backgroundColor: '#fff',
-            listStyle: 'none',
-            margin: 0,
-            padding: 0,
-            zIndex: 1000,
-          }}
-        >
+        <ul className="absolute top-full left-0 right-0 mt-1 border border-gray-200 bg-white rounded-md shadow-lg list-none m-0 p-0 z-50 max-h-60 overflow-y-auto">
           {suggestions.map((suggestedItem, index) => (
             <li
               key={index}
               onClick={() => handleSuggestionClick(suggestedItem)}
-              style={{
-                padding: '8px',
-                cursor: 'pointer',
-                borderBottom: '1px solid #eee',
-              }}
+              className="px-3 py-2 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
             >
                { <CustomComponent item={suggestedItem} /> }
             </li>
@@ -76,7 +59,9 @@ function Autocomplete<T>({ data, setData, fetchAllSuggestions,  CustomComponent}
         </ul>
       )}
       {data && (
-        <CustomComponent item={data} />
+        <div className="mt-2 p-2 bg-gray-50 rounded-md border border-gray-200">
+          <CustomComponent item={data} />
+        </div>
       )}
     </div>
   );

@@ -10,14 +10,14 @@ const Root = () => {
     useEffect(() => {
       
       if (user) {
-        navigate(routes.calendar); // Automatically redirect if authenticated
+        navigate(routes.home); // Automatically redirect to home page if authenticated
       }
       else navigate(routes.authentification);
     }, [navigate, user]);
     return (
-        <>
-        <Outlet />
-        </>
+        <div className="min-h-screen bg-gray-50">
+            <Outlet />
+        </div>
     )
 }
 export default Root;

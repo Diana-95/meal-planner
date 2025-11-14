@@ -5,6 +5,6 @@ dist/
 /reset.sql
 /src/server/scripts/reset-db.js
 /createIngredients.sql
-
+.env
 
 

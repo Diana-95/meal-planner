@@ -80,12 +80,11 @@ export class IngredientRepository extends SqlRepository<Ingredient, IngredientIn
         }));
     };
 
-    async getById(id: number, userId: number): Promise<Ingredient> {
+    async getById(id: number): Promise<Ingredient> {
         return await this.db('Ingredients')
                         .select('*')
                         .where({
-                            'id': id,
-                            'userId': userId
+                            'id': id
                         })
                         .first();
     }

@@ -45,7 +45,7 @@ export const registerIngredientController = (app: Express) => {
         const user = getUser(req, res);
         if(!user) return;
         
-        const ingredient = await ingredientRepository.getById(Number(id), user.userId);
+        const ingredient = await ingredientRepository.getById(Number(id));
         console.log("/api/data/get/:id");
         console.log(ingredient);
         res.status(200).json(ingredient);
@@ -65,7 +65,7 @@ export const registerIngredientController = (app: Express) => {
 
         console.log("Received data:", receivedData);
         await ingredientRepository.update(prod);
-        res.status(204).json({ success: true });
+        res.status(200).json({ success: true });
     });
 
     app.delete(API_BY_ID, validate(idParamSchema, infoType.params), 
@@ -75,7 +75,7 @@ export const registerIngredientController = (app: Express) => {
         if(!user) return;
         console.log("Received data:", id);
         await ingredientRepository.delete(Number(id));
-        res.status(201).json({ success: true });
+        res.status(204).json({ success: true });
     });
 };
 

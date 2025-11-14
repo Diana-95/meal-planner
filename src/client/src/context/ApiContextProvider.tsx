@@ -1,15 +1,15 @@
 // src/context/ApiContext.tsx
-import React, { createContext, useState, ReactNode, useContext, useMemo, useCallback } from 'react';
+import React, { createContext, useState, ReactNode, useContext, useMemo, useCallback, useRef } from 'react';
 
-import { createMeal, deleteMeal, getAllMeals, getMealById, updateMeal, updateMealPart } from '../apis/mealsApi';
-import { useUser } from './UserContextProvider';
+import { createMeal, deleteMeal, getAllMeals, getMealById, getAggregatedIngredients, updateMeal, updateMealPart } from '../apis/mealsApi';
 import { createDish, deleteDish, getAllDishes, getDishById, updateDish } from '../apis/dishesApi';
 import { createProduct, deleteProduct, getAllProducts, getProductById, updateProduct, updateProductPart } from '../apis/productsApi';
 import { createIngredient, deleteIngredient, getIngredients, updateIngredient } from '../apis/ingredientsApi';
 import { useNavigate } from 'react-router-dom';
 import routes from '../routes/routes';
-import { loginUser, registerUser } from '../apis/usersApi';
+import { getCurrentUser, loginUser, registerUser } from '../apis/usersApi';
 import { toastError } from '../components/common/toastService';
+import { User } from '../types/types';
 
 interface AxiosError<T = any> extends Error {
   response?: {
@@ -24,7 +24,7 @@ interface ApiContextType {
     (fn: F) => (...args: Parameters<F>) => Promise<Awaited<ReturnType<F>> | undefined>
   ) | null
   loading: boolean;
-  
+  setUserCallback: (callback: (user: User | null) => void) => void;
 }
 
 interface ApiProviderProps {
@@ -34,14 +34,21 @@ function isAxiosError<T = any>(error: any): error is AxiosError<T> {
   return error.isAxiosError === true;
 }
 // Create the context
-export const ApiContext = createContext<ApiContextType>({ handleApiCall: null, loading: false });
+export const ApiContext = createContext<ApiContextType>({ 
+  handleApiCall: null, 
+  loading: false,
+  setUserCallback: () => {}
+});
 
 // Create the provider component
 export const ApiContextProvider: React.FC<ApiProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const {setUser} = useUser();
+  const setUserRef = useRef<((user: User | null) => void) | null>(null);
   const navigate = useNavigate();
 
+  const setUserCallback = useCallback((callback: (user: User | null) => void) => {
+    setUserRef.current = callback;
+  }, []);
 
   const handleApiCall: ApiContextType['handleApiCall'] = useCallback(
     (fn: any) => async (...args: any) => {
@@ -57,7 +64,9 @@ export const ApiContextProvider: React.FC<ApiProviderProps> = ({ children }) => 
       if(isAxiosError(error)){
         
         if((error as AxiosError).response?.status === 401) {
-          setUser(null);
+          if (setUserRef.current) {
+            setUserRef.current(null);
+          }
           toastError('You are not authorized. Please log in again.');
           navigate(routes.authentification);
         }
@@ -70,18 +79,18 @@ export const ApiContextProvider: React.FC<ApiProviderProps> = ({ children }) => 
     finally {
       setLoading(false);
     }
-  }, [setUser, navigate]);
+  }, [navigate]);
 
 
 
   return (
-    <ApiContext.Provider value={{ handleApiCall, loading }}>
+    <ApiContext.Provider value={{ handleApiCall, loading, setUserCallback }}>
       {children}
     </ApiContext.Provider>
   );
 };
 export const useApi = () => {
-  const { handleApiCall, loading } = useContext(ApiContext);
+  const { handleApiCall, loading, setUserCallback } = useContext(ApiContext);
 
   if (!handleApiCall) {
     throw new Error('useApi should be within ApiContextProvider');
@@ -94,8 +103,8 @@ export const useApi = () => {
       updatePart: handleApiCall(updateMealPart),
       update: handleApiCall(updateMeal),
       delete: handleApiCall(deleteMeal),
-      getById: handleApiCall(getMealById)
-      
+      getById: handleApiCall(getMealById),
+      getAggregatedIngredients: handleApiCall(getAggregatedIngredients)
     },
     dishes: {
       create: handleApiCall(createDish),
@@ -121,11 +130,11 @@ export const useApi = () => {
     users: {
       create: handleApiCall(registerUser),
       login: handleApiCall(loginUser),
-      
+      get: handleApiCall(getCurrentUser),
     }
     // Add more entities similarly
-  }), []);
+  }), [handleApiCall]);
 
   
-  return { api, loading };
+  return { api, loading, setUserCallback };
 }

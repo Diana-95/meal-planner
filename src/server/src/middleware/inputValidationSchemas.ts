@@ -75,6 +75,40 @@ export const searchSchema = z.object({
     limit: z.coerce.number().max(20, 'linit is too big').optional()
 });
 
+export const mealQuerySchema = z.object({
+    startDate: z.string().refine((val) => {
+        if (!val) return true; // Allow undefined/empty for optional fields
+        // Accept ISO 8601 datetime strings or simple date format (YYYY-MM-DD)
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+    }, {
+        message: "startDate must be a valid date string (ISO 8601 or YYYY-MM-DD format)"
+    }).optional(),
+    endDate: z.string().refine((val) => {
+        if (!val) return true; // Allow undefined/empty for optional fields
+        // Accept ISO 8601 datetime strings or simple date format (YYYY-MM-DD)
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+    }, {
+        message: "endDate must be a valid date string (ISO 8601 or YYYY-MM-DD format)"
+    }).optional(),
+    cursor: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100, 'limit cannot exceed 100').optional(),
+    searchName: z.string().min(1, "searchName must be at least 1 character").optional()
+}).refine((data) => {
+    // If both dates are provided, ensure startDate is before or equal to endDate
+    if (data.startDate && data.endDate) {
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        return !isNaN(start.getTime()) && !isNaN(end.getTime()) && start <= end;
+    }
+    return true;
+}, {
+    message: "startDate must be before or equal to endDate",
+    path: ["endDate"]
+});
+
+
 export const idParamSchema = z.object({
     id: z.coerce.number()
 });
@@ -82,7 +116,11 @@ export const idParamSchema = z.object({
 export const ingredientIdsSchema = z.object({
     dishIdP: z.coerce.number().optional(),
     productIdP: z.coerce.number().optional()
-})
+});
+
+export const mealIdsSchema = z.object({
+    mealIds: z.array(z.coerce.number().int().positive()).min(1, "At least one meal ID is required").max(100, "Cannot process more than 100 meals at once")
+});
 
 export function validate (schema: ZodSchema, type: infoType) {
     return (req: Request, res: Response, next: NextFunction) => {

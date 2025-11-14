@@ -47,10 +47,22 @@ export const registerDishController = (app: Express) => {
         const { id } = req.params;
         const user = getUser(req, res);
         if(!user) return;
-        const dish = await dishRepository.getById(Number(id), user.userId);
-        console.log("/api/data/get/:id");
-        console.log(dish);
-        res.status(200).json(dish);
+        
+        try {
+            const dish = await dishRepository.getById(Number(id), user.userId);
+            console.log("/api/data/get/:id", id);
+            console.log("Dish found:", dish.name);
+            res.status(200).json(dish);
+        } catch (error) {
+            console.error(`Error fetching dish ${id}:`, error);
+            
+            // Check if it's a "not found" error
+            if (error instanceof Error && error.message.includes('not found')) {
+                return res.status(404).json({ error: 'Dish not found' });
+            }
+            
+            res.status(500).json({ error: 'Internal server error' });
+        }
     });
 
     app.put(API_BY_ID, 

@@ -1,26 +1,54 @@
-import React, { ReactNode, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import * as dates from 'date-arithmetic';
+// @ts-ignore - TimeGrid doesn't have TypeScript definitions
+import TimeGrid from 'react-big-calendar/lib/TimeGrid';
 
-import { Calendar, momentLocalizer, Event } from "react-big-calendar";
+import { Calendar, momentLocalizer, Event, Navigate } from "react-big-calendar";
 import moment from "moment";
 import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+import "../../styles/CalendarPage.css";
 
 import { Dish } from '../../types/types';
 import routes from '../../routes/routes';
 import { useApi } from '../../context/ApiContextProvider';
 import { useCalendarEvents } from '../../context/CalendarEventsContextProvider';
 
+const localizer = momentLocalizer(moment);
+
+const getRange = (date: Date, culture?: string) => {
+  // Ensure culture is always a string (fallback to 'en-US' if undefined)
+  let firstOfWeek = localizer.startOfWeek(culture ?? 'en-US');
+  let start = dates.startOf(date, 'week', firstOfWeek);
+  let end = dates.endOf(date, 'week', firstOfWeek);
+
+  if (firstOfWeek === 1) {
+    end = dates.subtract(end, 2, 'day');
+  } else {
+    start = dates.add(start, 1, 'day');
+    end = dates.subtract(end, 1, 'day');
+  }
+
+  // Manually create the range array
+  const range: Date[] = [];
+  let current = new Date(start);
+  while (current <= end) {
+    range.push(new Date(current));
+    current = dates.add(current, 1, 'day');
+  }
+  return range;
+}
 const CustomEvent = ({ event }: { event: any }) => {
   return (
-    <div>
+    <div className="flex">
       <strong>{event.title}</strong>
       {event.dish?.name && (
-        <div style={{ fontSize: '0.8em', color: '#111' }}>{event.dish?.name}</div>
+        <div >{event.dish?.name}</div>
       )}
       {event.location && (
-        <div style={{ fontSize: '0.8em', color: '#888' }}>📍 {event.location}</div>
+        <div >📍 {event.location}</div>
       )}
     </div>
   );
@@ -34,7 +62,38 @@ export interface MyMeal extends Event {
   dish?: Dish | null;
 }
 const DragAndDropCalendar = withDragAndDrop<MyMeal>(Calendar);
-const localizer = momentLocalizer(moment);
+
+interface MyWeekProps {
+  date: Date;
+  culture?: string;
+  [key: string]: any;
+}
+
+class MyWeek extends React.Component<MyWeekProps> {
+  static navigate(date: Date, action: string): Date {
+    switch (action){
+      case Navigate.PREVIOUS:
+        return dates.add(date, -1, 'week');
+      case Navigate.NEXT:
+        return dates.add(date, 1, 'week');
+      default:
+        return date;
+    }
+  }
+
+  static title(date: Date, options: { formats?: any; culture?: string }): string {
+    return `My awesome week: ${date.toLocaleDateString()}`;
+  }
+
+  render() {
+    let { date, culture } = this.props;
+    let range = getRange(date, culture);
+
+    return (
+      <TimeGrid {...this.props} range={range} eventOffset={15} />
+    );
+  }
+}
 
 const CalendarPage = () => {
 
@@ -120,16 +179,17 @@ const CalendarPage = () => {
   };
 
   return (
-      <div style={{ height: '80vh', padding: '20px' }}>
+      <div className="mt-16">
         <h2>Weekly Meal Planner</h2>
         <DragAndDropCalendar
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           localizer={localizer}
           events={myMeals}
           defaultView='month' // Set default view to week
-          views={['month']} // Enable only week and day views
+          views={{ month: true, week: MyWeek, agenda: true }}// Enable only week and day views
           onEventDrop={handleEventDrop}
           resizable
-          onEventResize={handleResizeEvent}
+          onEventResize={handleResizeEvent}                                                               
           style={{ height: 800 }}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
@@ -138,6 +198,8 @@ const CalendarPage = () => {
           components={{
             event: CustomEvent, // Use the custom event component
           }}
+          onShowMore={(events: MyMeal[], date: Date) => console.log(events, date)}
+          step={60}
         />
         
         <Outlet />

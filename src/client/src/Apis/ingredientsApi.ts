@@ -15,7 +15,7 @@ export const createIngredient = async (productId: number, dishId: number, quanti
 }
 
 export const updateIngredient = async (productId: number, dishId: number, quantity: number, id: number) => {
-  const response = await axiosInstance.post(`${API_URL}/${id}`, {
+  const response = await axiosInstance.put(`${API_URL}/${id}`, {
           productId,
           dishId,
           quantity

@@ -83,69 +83,93 @@ const EditMealWindow = () => {
   }
 
   return (
-    <div className={classes.overlay} onClick={handleClose}>
-      <div className={classes.modal_window} onClick={(e) => e.stopPropagation()}>
-        <h2>Edit Meal</h2>
-        {(
-          <div>
-            <div style={{ marginBottom: "10px" }}>
-              <label htmlFor='title'>
-                Title
+    <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        onClick={handleClose}
+    >
+      <div 
+          className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Meal</h2>
+        
+        <div className="space-y-4">
+            <div>
+                <label htmlFor='title' className="block text-sm font-medium text-gray-700 mb-1">
+                    Title
                 </label>
                 <input
-                  id='title'
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  style={{ width: "100%", padding: "5px", marginTop: "5px" }}
+                    id='title'
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Enter meal title"
                 />
             </div>
-            <div style={{ marginBottom: "10px" }}>
-              <label htmlFor='start'>
-                Start:
+            
+            <div>
+                <label htmlFor='start' className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
                 </label>
                 <DatePicker
-                  id='start'
-                  selected={start}
-                  onChange={(date: Date | null) => setStart(date)}
-                  dateFormat="yyyy-MM-dd"
+                    id='start'
+                    selected={start}
+                    onChange={(date: Date | null) => setStart(date)}
+                    dateFormat="yyyy-MM-dd"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+            </div>
             
-                />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <label htmlFor='end'>
-                End:
-                  </label>
+            <div>
+                <label htmlFor='end' className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                </label>
                 <DatePicker
-                  id='end'
-                  selected={end}
-                  onChange={(date: Date | null) => setEnd(date)}
-                  dateFormat="yyyy-MM-dd"
-              
+                    id='end'
+                    selected={end}
+                    onChange={(date: Date | null) => setEnd(date)}
+                    dateFormat="yyyy-MM-dd"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
-              
             </div>
-            <Autocomplete<Dish>
-              data={selectedDish} setData={setSelectedDish} 
-              fetchAllSuggestions={api.dishes.get}
-              CustomComponent={DishAutocomplete}
-              />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <button onClick={handleSave} disabled={loading || (!title || !start || !end)} style={{ padding: "10px 20px" }} >
+            
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dish (Optional)
+                </label>
+                <Autocomplete<Dish>
+                    data={selectedDish} 
+                    setData={setSelectedDish} 
+                    fetchAllSuggestions={api.dishes.get}
+                    CustomComponent={DishAutocomplete}
+                />
+            </div>
+        </div>
+        
+        <div className="mt-6 flex justify-between space-x-3">
+            <button 
+                onClick={handleSave} 
+                disabled={loading || (!title || !start || !end)}
+                className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
                 {loading ? 'Submitting' : 'Save'}
-              </button>
-              <button onClick={handleClose} style={{ padding: "10px 20px" }}>
+            </button>
+            <button 
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
+            >
+                Delete
+            </button>
+            <button 
+                onClick={handleClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors font-medium"
+            >
                 Cancel
-              </button>
-              <button onClick={handleDelete} style={{ padding: "10px 20px" }}>
-                Delete meal
-              </button>
-
-            </div>
-          </div>
-        )}
+            </button>
         </div>
       </div>
-    );
+    </div>
+  );
 }
 export default EditMealWindow;

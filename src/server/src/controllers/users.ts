@@ -66,7 +66,7 @@ export const registerUserController = (app: Express) => {
             return res.status(401).json({ error: 'Authentication failed' });
         }
         signToken(user.id, username, user.email, res);
-        res.status(201).json({ user });
+        res.status(201).json(user);
         
     });
 

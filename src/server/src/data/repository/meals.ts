@@ -33,7 +33,7 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
             'userId': r.userId
         });
 
-        const updateFields: Record<string, any> = {};
+        const updateFields: Record<string, string | number | null> = {};
         
         if (r.name) updateFields.name = r.name;
         if (r.startDate) updateFields.startDate = r.startDate;
@@ -58,10 +58,27 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
         })
     }
 
-    async get(cursor: number| undefined, limit: number, query: QueryParams): Promise<Meal[]> { 
+    async get(cursor: number| undefined, limit: number, query: QueryParams = {}): Promise<Meal[]> { 
 
-        const {userId} = query;
-        const rows = await this.db('Meals')
+        const { userId, startDate, endDate, searchName } = query;
+
+        const normalizeDateParam = (value?: string): string | undefined => {
+            if (!value) return undefined;
+
+            // Accept numeric timestamps (in ms) or ISO strings
+            const numericValue = Number(value);
+            const date = !Number.isNaN(numericValue) && value.trim() !== ''
+                ? new Date(numericValue)
+                : new Date(value);
+
+            if (Number.isNaN(date.getTime())) return undefined;
+            return date.toISOString();
+        };
+
+        const normalizedStart = normalizeDateParam(startDate);
+        const normalizedEnd = normalizeDateParam(endDate);
+
+        const rowsQuery = this.db('Meals')
             .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
             .select(
                 'Meals.id AS mealId',
@@ -75,18 +92,44 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
                 'Dishes.imageUrl AS imageUrl')
             .where('Meals.userId', userId)
             .limit(limit);
-        return rows.map((row: any) => ({
+
+        if (normalizedStart) {
+            // Keep meals that end on or after the selected start date
+            rowsQuery.andWhere('Meals.endDate', '>=', normalizedStart);
+        }
+
+        if (normalizedEnd) {
+            // Keep meals that start on or before the selected end date
+            rowsQuery.andWhere('Meals.startDate', '<=', normalizedEnd);
+        }
+
+        if (searchName) {
+            rowsQuery.andWhere('Meals.name', 'like', `%${searchName}%`);
+        }
+
+        const rows = await rowsQuery;
+        return rows.map((row: {
+            mealId: number;
+            mealName: string;
+            startDate: string | number;
+            endDate: string | number;
+            userId: number;
+            dishId: number | null;
+            dishName: string | null;
+            recipe: string | null;
+            imageUrl: string | null;
+        }) => ({
             id: row.mealId,
             name: row.mealName,
-            startDate: row.startDate,
-            endDate: row.endDate,
-            dish: {
+            startDate: typeof row.startDate === 'string' ? new Date(row.startDate).getTime() : row.startDate,
+            endDate: typeof row.endDate === 'string' ? new Date(row.endDate).getTime() : row.endDate,
+            dish: row.dishId ? {
                 id: row.dishId,
-                name: row.dishName,
-                recipe: row.recipe,
-                imageUrl: row.imageUrl,
+                name: row.dishName || '',
+                recipe: row.recipe || '',
+                imageUrl: row.imageUrl || '',
                 userId: userId
-            }
+            } : null
         } as Meal));
       
     }
@@ -123,5 +166,51 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
                 userId: userId
             } as Dish)
         } as Meal);
+    }
+
+    /**
+     * Get aggregated ingredients from multiple meals
+     * Returns ingredients grouped by product with summed quantities using SQL aggregation
+     */
+    async getAggregatedIngredients(mealIds: number[], userId: number): Promise<Array<{
+        productId: number;
+        productName: string;
+        measure: string;
+        price: number;
+        totalQuantity: number;
+    }>> {
+        // Use SQL GROUP BY and SUM to aggregate ingredients directly in the database
+        // Join: Meals -> Dishes -> Ingredients -> Products
+        const rows = await this.db('Meals')
+            .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
+            .leftJoin('Ingredients', 'Dishes.id', 'Ingredients.dishId')
+            .leftJoin('Products', 'Ingredients.productId', 'Products.id')
+            .select(
+                'Products.id as productId',
+                'Products.name as productName',
+                'Products.measure',
+                'Products.price',
+                this.db.raw('SUM(??) as ??', ['Ingredients.quantity', 'totalQuantity'])
+            )
+            .whereIn('Meals.id', mealIds)
+            .andWhere('Meals.userId', userId)
+            .whereNotNull('Ingredients.id') // Only meals with ingredients
+            .whereNotNull('Products.id') // Only valid products
+            .groupBy('Products.id', 'Products.name', 'Products.measure', 'Products.price')
+            .orderBy('Products.name', 'asc');
+
+        return rows.map((row: {
+            productId: number;
+            productName: string;
+            measure: string | null;
+            price: number | null;
+            totalQuantity: number | string; // SQLite returns SUM as string sometimes
+        }) => ({
+            productId: row.productId,
+            productName: row.productName,
+            measure: row.measure || 'unit',
+            price: row.price || 0,
+            totalQuantity: typeof row.totalQuantity === 'string' ? parseFloat(row.totalQuantity) : row.totalQuantity
+        }));
     }
 }

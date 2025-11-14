@@ -9,7 +9,7 @@ export abstract class SqlRepository<T, I = T> implements Repository<T,I> {
         this.db = knex({
             client: 'sqlite3',
             connection: {
-                filename: 'meals.db' // Path to your SQLite file
+                filename: process.env.DB_FILEPATH?? '' // Path to your SQLite file
             },
             useNullAsDefault: true // Recommended for SQLite to handle default values
         });

@@ -48,22 +48,47 @@ const DishList = () => {
 
       return (
         <>
-        <div className={styles.dishListContainer}>
-        {dishes.map((dish) => (
-          <div className={styles.dishCard} key={dish.id}>
-            <img src={dish.imageUrl} alt={dish.name} className={styles.dishImage} />
-            <div className={styles.dishContent}>
-              <h3 className={styles.dishTitle}>{dish.name}</h3>
-              <p className={styles.dishRecipe}>{dish.recipe}</p>
-              <button className={styles.createButton} onClick={() => editDish(dish.id)}>Edit</button>
+        <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="mb-6 flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Recipe Collection</h2>
+              <p className="mt-1 text-sm text-gray-500">Manage your favorite recipes and dishes</p>
             </div>
+            <button 
+              onClick={addDish}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+            >
+              + Create New Dish
+            </button>
           </div>
-        ))}
-        <button className={styles.createButton} onClick={addDish}>Create New Dish</button>
-        
-      </div>
-      <Outlet />
-      </>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dishes.map((dish) => (
+              <div 
+                key={dish.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <img 
+                  src={dish.imageUrl} 
+                  alt={dish.name} 
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{dish.name}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">{dish.recipe}</p>
+                  <button 
+                    onClick={() => editDish(dish.id)}
+                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Outlet />
+        </>
       );
 }
 export default DishList;

@@ -5,8 +5,8 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { getUser } from "./utils";
 import { ProductQueryParams } from "../data/repository/products";
 import { idParamSchema, infoType, productPatchSchema, productSchema, searchSchema, validate } from "../middleware/inputValidationSchemas";
-const API = '/api/products';
-const API_BY_ID = '/api/products/:id';
+export const API = '/api/products';
+export const API_BY_ID = '/api/products/:id';
 
 export const registerFormMiddleware = (app: Express) => {
     app.use(express.urlencoded({ extended: true }))
@@ -69,7 +69,7 @@ export const registerProductController = (app: Express) => {
         console.log("prod=", prod);
         console.log("Received data:", receivedData);
         await productRepository.update(prod, user.userId);
-        res.status(204).json({ success: true });
+        res.status(200).json({ success: true });
     });
 
     app.patch(API_BY_ID, validate(productPatchSchema, infoType.body), async (req, res) => {
@@ -77,16 +77,15 @@ export const registerProductController = (app: Express) => {
         const user = getUser(req, res);
         if(!user) return;
         // validate
-        const prod: Product = {
-            name, 
+        const prod: Partial<Product> = {
+            name,
             price,
             measure,
             id: Number(req.params.id),
-            userId: user.userId
         };
         console.log("prod=", prod);
         await productRepository.updatePatch(prod, user.userId);
-        res.status(204).json({ success: true });
+        res.status(200).json({ success: true });
     });
 
     app.delete(API_BY_ID, validate(idParamSchema, infoType.params), async (req, res) => {
@@ -96,7 +95,7 @@ export const registerProductController = (app: Express) => {
 
         console.log("Received data:", id);
         const deletedItems = await productRepository.delete(Number(id), user.userId);
-        if(deletedItems > 0) res.status(204).json({ success: true });
+        if(deletedItems > 0) res.status(200 ).json({ success: true });
         else res.status(404).json({error: "Resource not found"});
         
     });

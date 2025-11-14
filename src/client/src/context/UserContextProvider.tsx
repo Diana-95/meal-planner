@@ -1,43 +1,56 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { useContext, useState, ReactNode, useEffect, useMemo, useRef } from 'react';
 import { User } from '../types/types';
-import { getCurrentUser } from '../apis/usersApi';
-
-interface UserContextType {
-  user: User | null; // The current user (null if not logged in)
-  setUser: (user: User | null) => void; // Function to update the user
-}
-
-// Create the context with an initial null value
-const UserContext = createContext<UserContextType | undefined>(undefined);
+import { UserContext, UserContextType } from './UserContext';
+import { useApi } from './ApiContextProvider';
 
 // Create a provider component
 export const UserContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-
+  const value = useMemo(() => ({ user, setUser }), [user]);
+  const { api, setUserCallback } = useApi();
+  
+  // Register setUser callback with ApiContext so it can clear user on 401 errors
   useEffect(() => {
+    setUserCallback(setUser);
+  }, [setUserCallback, setUser]);
 
-    getCurrentUser()
-    .then((loggedUser) => {
-        setUser({ 
-            username: loggedUser.username,
-            email: loggedUser.email,
-            id: loggedUser.id
-        })
-    })
-    .catch((error) => {
-        console.log(error)
-    })
+  // Fetch user on mount
+  useEffect(() => {
+    let isMounted = true;
     
-  }, [])
+    const fetchData = async () => {
+      try {
+        const currentUser = await api.users.get();
+        if (isMounted) {
+          if(currentUser) {
+            setUser(currentUser);
+          } else {
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        // If there's an error (e.g., not authenticated), set user to null
+        if (isMounted) {
+          setUser(null);
+        }
+      }
+    }
+
+    fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [api.users.get]);
+
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// Custom hook for consuming the context
 export const useUser = (): UserContextType => {
   const context = useContext(UserContext);
   if (!context) {

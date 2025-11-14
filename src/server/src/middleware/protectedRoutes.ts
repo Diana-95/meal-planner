@@ -13,4 +13,12 @@ router.post('/api', (req: Request, res: Response) => {
   console.log('router.post')
   res.status(200).json({ message: 'Protected route accessed' });
 });
+router.put('/api', (req: Request, res: Response) => {
+  console.log('router.post')
+  res.status(200).json({ message: 'Protected route accessed' });
+});
+router.patch('/api', (req: Request, res: Response) => {
+  console.log('router.post')
+  res.status(200).json({ message: 'Protected route accessed' });
+});
 export default router;

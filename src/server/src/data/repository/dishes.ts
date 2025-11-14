@@ -144,33 +144,43 @@ export class DishRepository extends SqlRepository<Dish> {
             'Products.id as productId',
             'Products.measure',
             'Products.price' 
-            // id: number,
-            // name: string,
-            // measure: string,
-            // price: number, 
-            // userId: number
             )
-            .where('Dishes.id', id) // Use the actual column name from the `Dishes` table
-            .andWhere('Dishes.userId', userId); // Filter by userId
+            .where('Dishes.id', id)
+            .andWhere('Dishes.userId', userId);
+    
+        // Check if dish exists - if not, throw error
+        if (!rows || rows.length === 0 || !rows[0] || !rows[0].dishId) {
+            throw new Error(`Dish with id ${id} not found for user ${userId}`);
+        }
+
+        // Get dish info from first row (dish info is the same for all rows)
+        const firstRow = rows[0];
+        
+        // Build ingredient list, filtering out null ingredients (when dish has no ingredients)
+        // A dish with no ingredients will have one row with null ingredient fields
+        const ingredientList: Ingredient[] = rows
+            .filter((row) => row.ingredientId !== null && row.productId !== null && row.productName !== null)
+            .map((row) => ({
+                id: row.ingredientId,
+                product: {
+                    id: row.productId,
+                    name: row.productName,
+                    measure: row.measure,
+                    price: row.price,
+                    userId: userId
+                } as Product,
+                dishId: firstRow.dishId,
+                quantity: row.quantity || 0,
+            } as Ingredient));
     
         const dish: Dish = {
-            id: rows[0].dishId,
-            name: rows[0].dishName,
-            recipe: rows[0].recipe,
-            imageUrl: rows[0].imageUrl,
-            ingredientList: rows.map((row) => ({
-              id: row.ingredientId,
-              product: ({
-                id: row.productId,
-                name: row.productName,
-                measure: row.measure,
-                price: row.price
-              } as Product),
-              dishId: rows[0].dishId,
-              quantity: row.quantity,
-
-            })),
-          };
+            id: firstRow.dishId,
+            name: firstRow.dishName,
+            recipe: firstRow.recipe,
+            imageUrl: firstRow.imageUrl,
+            userId: firstRow.userId,
+            ingredientList: ingredientList,
+        };
         
         return dish;
     }

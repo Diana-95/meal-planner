@@ -6,9 +6,11 @@ import RootPage from './routes/root';
 
 import Authentification from './routes/root/auth';
 import AppAccess from './routes/root/app';
+import HomePage from './components/home/HomePage';
 import Calendar from './routes/root/app/calendar';
 import Products, { productsLoader } from './routes/root/app/products/index';
 import Dishes from './routes/root/app/dishes';
+import ShoppingCart from './components/cart/ShoppingCart';
 
 import EditMeal from './components/calendar/EditMealWindow';
 import NewMeal from './components/calendar/NewMealWindow';
@@ -33,6 +35,10 @@ const router = createBrowserRouter([
         path: '/app',
         element: <AppAccess />,
         children: [
+          {
+            index: true,
+            element: <HomePage />,
+          },
           {
             path: 'calendar',
             element: <Calendar />,
@@ -79,6 +85,11 @@ const router = createBrowserRouter([
                 errorElement: <ErrorPage />,
               }
             ]
+          },
+          {
+            path: 'cart',
+            element: <ShoppingCart />,
+            errorElement: <ErrorPage />,
           }
         ]
       }
@@ -88,9 +99,7 @@ const router = createBrowserRouter([
 
 function App() {
 
-  return  <UserContextProvider>
-            <RouterProvider router={router} />
-          </UserContextProvider>
+  return <RouterProvider router={router} />
 }
 
 export default App;
