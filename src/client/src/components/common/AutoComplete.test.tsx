@@ -37,8 +37,7 @@ describe('Autocomplete component', () => {
         data={null}
         setData={mockSetData}
         fetchAllSuggestions={mockFetchAllSuggestions}
-        CustomComponent={DummyAutocompleteComponent}
-      />
+        CustomComponent={DummyAutocompleteComponent} removeData={jest.fn()}      />
     );
     const input = screen.getByPlaceholderText('Search for a dish...');
     expect(input).toBeInTheDocument();
@@ -51,6 +50,7 @@ describe('Autocomplete component', () => {
         setData={mockSetData}
         fetchAllSuggestions={mockFetchAllSuggestions}
         CustomComponent={DummyAutocompleteComponent}
+        removeData={jest.fn()}
       />
     );
     const input = screen.getByPlaceholderText('Search for a dish...');
@@ -68,6 +68,7 @@ describe('Autocomplete component', () => {
         setData={mockSetData}
         fetchAllSuggestions={mockFetchAllSuggestions}
         CustomComponent={DummyAutocompleteComponent}
+        removeData={jest.fn()}
       />
     );
     const input = screen.getByPlaceholderText('Search for a dish...');
@@ -95,6 +96,7 @@ describe('Autocomplete component', () => {
         setData={mockSetData}
         fetchAllSuggestions={mockFetchAllSuggestions}
         CustomComponent={DummyAutocompleteComponent}
+        removeData={jest.fn()}
       />
     );
     const input = screen.getByPlaceholderText('Search for a dish...');
@@ -126,6 +128,7 @@ describe('Autocomplete component', () => {
         setData={mockSetData}
         fetchAllSuggestions={mockFetchAllSuggestions}
         CustomComponent={DummyAutocompleteComponent}
+        removeData={jest.fn()}
       />
     );
     // The custom component should render the preselected data

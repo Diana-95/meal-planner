@@ -31,6 +31,10 @@ const DishList = () => {
       const editDish = (id: number) => {
         navigate(routes.editDish(id));
       };
+
+      const viewRecipe = (id: number) => {
+        navigate(routes.viewRecipe(id));
+      };
       
       const sortDishes = () => {
         const sortedDishes = [...dishes].sort((a, b) => a.name.localeCompare(b.name));
@@ -68,20 +72,41 @@ const DishList = () => {
                 key={dish.id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                <img 
-                  src={dish.imageUrl} 
-                  alt={dish.name} 
-                  className="w-full h-48 object-cover"
-                />
+                {dish.imageUrl ? (
+                  <img 
+                    src={dish.imageUrl} 
+                    alt={dish.name} 
+                    className="w-full h-48 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                    No image
+                  </div>
+                )}
                 <div className="p-4">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{dish.name}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">{dish.recipe}</p>
-                  <button 
-                    onClick={() => editDish(dish.id)}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  <h3 
+                    className="text-xl font-semibold text-gray-900 mb-2 cursor-pointer hover:text-primary-600 transition-colors"
+                    onClick={() => viewRecipe(dish.id)}
                   >
-                    Edit
-                  </button>
+                    {dish.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">{dish.recipe}</p>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => viewRecipe(dish.id)}
+                      className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                    >
+                      View Recipe
+                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => editDish(dish.id)}
+                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

@@ -32,13 +32,16 @@ export const registerProductController = (app: Express) => {
         const receivedUser = getUser(req, res);
         if(!receivedUser) return;
 
-        const { searchName, cursor = 1, limit = 10 } = req.query;
+        const { searchName, cursor, limit = 100 } = req.query;
         console.log('products query', req.query);
         const queryParams: ProductQueryParams = {
             searchName: searchName as string | undefined,
             userId: receivedUser.userId
         }
-        const products = await productRepository.get(Number(cursor), Number(limit), queryParams);
+        // If cursor is not provided or is 0, pass undefined to get all products from the start
+        const cursorValue = cursor ? Number(cursor) : undefined;
+        const limitValue = limit ? Number(limit) : 100;
+        const products = await productRepository.get(cursorValue, limitValue, queryParams);
         console.log("/api/data/product/getall");
         console.log(products);
         console.log('user=', req.user);

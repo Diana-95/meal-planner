@@ -95,6 +95,7 @@ export class DishRepository extends SqlRepository<Dish> {
       
     async get(cursor: number|undefined, limit: number, query: DishQuery): Promise<Dish[]> { 
 
+
         const{ searchName, userId } = query;
         const resQuery = this.db('Dishes')
             .leftJoin('Ingredients', 'Dishes.id', 'Ingredients.dishId')

@@ -28,13 +28,15 @@ export const loginSchema = z.object({
 export const productSchema = z.object({
     name: z.string(),
     measure: z.enum(['kg' , 'gram' , 'piece']).default('piece'),
-    price: z.number().default(0), 
+    price: z.number().default(0),
+    emoji: z.string().nullable().optional(),
 });
 
 export const productPatchSchema = z.object({
     name: z.string().optional(),
     measure: z.enum(['kg' , 'gram' , 'piece']).optional(),
-    price: z.coerce.number().optional(), 
+    price: z.coerce.number().optional(),
+    emoji: z.string().nullable().optional(),
 });
 
 export const mealSchema = z.object({
@@ -70,9 +72,9 @@ export const dishPatchSchema = z.object({
 });
 
 export const searchSchema = z.object({
-    searchName: z.string().min(3, "must be at least 3 letters").optional(),
+    searchName: z.string().optional(),
     cursor: z.coerce.number().optional(),
-    limit: z.coerce.number().max(20, 'linit is too big').optional()
+    limit: z.coerce.number().max(200, 'limit is too big').optional()
 });
 
 export const mealQuerySchema = z.object({

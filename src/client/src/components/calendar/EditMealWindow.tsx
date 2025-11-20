@@ -23,6 +23,7 @@ const EditMealWindow = () => {
   const [start, setStart] = useState<Date | null>();
   const [end, setEnd] = useState<Date | null>();
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const hasDish = !!selectedDish;
   
   useEffect(() => {
     const fetchMeal = async () => {
@@ -32,7 +33,16 @@ const EditMealWindow = () => {
           setTitle(meal.name);
           setStart(new Date(meal.startDate));
           setEnd(new Date(meal.endDate));
-          setSelectedDish(meal.dish);
+          if (meal.dish?.id) {
+            try {
+              const fullDish = await api.dishes.getById(meal.dish.id);
+              setSelectedDish(fullDish ?? meal.dish);
+            } catch {
+              setSelectedDish(meal.dish);
+            }
+          } else {
+            setSelectedDish(null);
+          }
         }
         else {
           console.error("Meal not found");
@@ -65,9 +75,28 @@ const EditMealWindow = () => {
     navigate(routes.calendar);
   } 
 
+  const removeSelectedDish = async () => {
+    setSelectedDish(null);
+    if(!start || !end) {
+      toastError('Please fill in all fields before saving.');
+      return;
+    }
+    const response = await api.meals.update(Number(id), start.toISOString(), end.toISOString(), title, undefined);
+    if(!response) {
+      toastError('Failed to update meal. Please try again.');
+      return;
+    }
+    toastInfo(`Dish was removed from ${title}`);
+    setMyMeals((prev) => 
+      prev.map((item) => 
+        item.id === Number(id) ? {...item, dish: null } : item
+      ));
+  }
+
   const handleClose = () => {
     navigate(routes.calendar);
   }
+
 
   const handleDelete = async () => {
     const response = await api.meals.delete(Number(id));
@@ -88,7 +117,7 @@ const EditMealWindow = () => {
         onClick={handleClose}
     >
       <div 
-          className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh]"
           onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Meal</h2>
@@ -143,6 +172,8 @@ const EditMealWindow = () => {
                     setData={setSelectedDish} 
                     fetchAllSuggestions={api.dishes.get}
                     CustomComponent={DishAutocomplete}
+                    removeData={() => setSelectedDish(null)}
+                    getEditLink={(dish) => `${routes.dishes}/${routes.editDish(dish.id)}`}
                 />
             </div>
         </div>

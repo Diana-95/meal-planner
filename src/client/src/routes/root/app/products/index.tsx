@@ -13,7 +13,7 @@ const Products = () => {
   )
 }
 export const productsLoader = async () => {
-    return getAllProducts()
+    return getAllProducts(undefined, 100) // Fetch up to 100 products (no cursor, limit 100)
     .then((prods) => {
         return prods;
     })

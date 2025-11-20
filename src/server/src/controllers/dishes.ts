@@ -34,7 +34,7 @@ export const registerDishController = (app: Express) => {
         if(!user) return;
         const {searchName, cursor, limit} = req.query;
         const query: DishQuery = {
-            searchName: searchName as string | undefined,
+            searchName: searchName === ''? undefined : searchName as string,
             userId: user.userId
         }
         const meals = await dishRepository.get(Number(cursor), Number(limit), query);

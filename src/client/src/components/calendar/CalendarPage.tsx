@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import * as dates from 'date-arithmetic';
 // @ts-ignore - TimeGrid doesn't have TypeScript definitions
 import TimeGrid from 'react-big-calendar/lib/TimeGrid';
 
-import { Calendar, momentLocalizer, Event, Navigate } from "react-big-calendar";
+import { Calendar, momentLocalizer, Event, Navigate, View } from "react-big-calendar";
 import moment from "moment";
 import withDragAndDrop, { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -40,19 +40,25 @@ const getRange = (date: Date, culture?: string) => {
   }
   return range;
 }
-const CustomEvent = ({ event }: { event: any }) => {
-  return (
-    <div className="flex">
-      <strong>{event.title}</strong>
-      {event.dish?.name && (
-        <div >{event.dish?.name}</div>
-      )}
-      {event.location && (
-        <div >📍 {event.location}</div>
-      )}
-    </div>
-  );
-};
+const EVENT_COLORS = [
+  'calendar-event--blue',
+  'calendar-event--green',
+  'calendar-event--purple',
+  'calendar-event--pink',
+  'calendar-event--orange',
+];
+
+const getEventColorClass = (id: number) =>
+  EVENT_COLORS[id % EVENT_COLORS.length];
+
+const CustomEvent = ({ event }: { event: MyMeal }) => (
+  <div className={`calendar-event-card ${getEventColorClass(event.id)}`}>
+    <div className="calendar-event-title">{event.title}</div>
+    {event.dish?.name && (
+      <div className="calendar-event-dish">{event.dish.name}</div>
+    )}
+  </div>
+);
 
 export interface MyMeal extends Event {
   id: number;
@@ -100,9 +106,12 @@ const CalendarPage = () => {
   const { myMeals, setMyMeals } = useCalendarEvents();
   const navigate = useNavigate();
   const { api } = useApi();
-
-  const defaultDate = new Date();
-  defaultDate.setHours(0, 0, 0, 0);
+  const [currentView, setCurrentView] = useState<View>('month');
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
 
   useEffect(() => {
     const loadMeals = async () => {
@@ -178,6 +187,26 @@ const CalendarPage = () => {
     console.log(event.title, start, end);
   };
 
+  const handleViewChange = useCallback((view: View) => {
+    setCurrentView(view);
+  }, []);
+
+  const handleNavigate = useCallback((newDate: Date) => {
+    setCurrentDate(newDate);
+  }, []);
+
+  const handleDrillDown = useCallback((date: Date) => {
+    const startOfWeek = localizer.startOf(date, 'week' as any);
+    setCurrentDate(startOfWeek);
+    setCurrentView('agenda');
+  }, []);
+
+  const formats = {
+    agendaTimeRangeFormat: () => '',
+    agendaTimeFormat: () => '',
+    eventTimeRangeFormat: () => '',
+  };
+
   return (
       <div className="mt-16">
         <h2>Weekly Meal Planner</h2>
@@ -185,12 +214,15 @@ const CalendarPage = () => {
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           localizer={localizer}
           events={myMeals}
-          defaultView='month' // Set default view to week
-          views={{ month: true, week: MyWeek, agenda: true }}// Enable only week and day views
+          view={currentView}
+          onView={handleViewChange}
+          date={currentDate}
+          onNavigate={handleNavigate}
+          defaultView='month'
+          views={{ month: true, agenda: true }}// Enable only week and day views
           onEventDrop={handleEventDrop}
           resizable
           onEventResize={handleResizeEvent}                                                               
-          style={{ height: 800 }}
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
           selectable
@@ -200,6 +232,9 @@ const CalendarPage = () => {
           }}
           onShowMore={(events: MyMeal[], date: Date) => console.log(events, date)}
           step={60}
+          onDrillDown={handleDrillDown}
+          drilldownView="week"
+          formats={formats}
         />
         
         <Outlet />

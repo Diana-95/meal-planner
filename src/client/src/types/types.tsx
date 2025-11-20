@@ -23,7 +23,8 @@ export interface Product {
     id: number,
     name: string,
     measure: string,
-    price: number
+    price: number,
+    emoji?: string | null
 }
 export interface User {
     id: number;

@@ -50,3 +50,129 @@
   .rbc-time-content > * + * > * {
     border-left: none;
   }
+
+  .rbc-event {
+    border: none !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+  }
+
+  .rbc-day-slot .rbc-background-event {
+    background: linear-gradient(120deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.03)) !important;
+    border: 1px solid rgba(59, 130, 246, 0.25) !important;
+    border-radius: 8px !important;
+  }
+
+  /* Hide time column in agenda view */
+  .rbc-agenda-view .rbc-agenda-time-cell,
+  .rbc-agenda-view .rbc-agenda-time-column {
+    display: none !important;
+  }
+
+.rbc-agenda-view .rbc-agenda-table thead > tr > th:nth-child(2) {
+  display: none !important;
+}
+
+  .rbc-agenda-view table thead > tr > th:first-child,
+  .rbc-agenda-view .rbc-agenda-date-cell {
+    padding-left: 16px;
+  }
+
+.calendar-event-card {
+    width: 100%;
+    height: 20px;
+    border-radius: 8px;
+    padding: 4px 6px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+    transition: box-shadow 0.2s ease;
+  }
+
+  .calendar-event-card:hover {
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.25);
+  }
+
+  .calendar-remove-dish-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .calendar-remove-dish-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+  }
+
+  .calendar-event-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .calendar-event-dish {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.85;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .calendar-event--blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  .calendar-event--green {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.05));
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+
+  .calendar-event--purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.05));
+    border-color: rgba(139, 92, 246, 0.35);
+  }
+
+  .calendar-event--pink {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.07));
+    border-color: rgba(236, 72, 153, 0.4);
+  }
+
+  .calendar-event--orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.08));
+    border-color: rgba(249, 115, 22, 0.4);
+  }
+  /* Hide the hour gutter and the time grid */
+.rbc-time-view .rbc-time-gutter,
+.rbc-time-view .rbc-time-content {
+  display: none !important;
+}
+
+Expand the all-day row so it fills the available height
+.rbc-time-view .rbc-allday-cell {
+  height: auto !important;
+  min-height: 400px; /* adjust to whatever height you want */
+}
+
+/* Remove the extra separator row when the time grid is hidden */
+.rbc-time-view .rbc-allday-cell + .rbc-row {
+  display: none !important;
+}
+.rbc-calendar {
+  flex: 1;
+  min-height: 1000px;
+}

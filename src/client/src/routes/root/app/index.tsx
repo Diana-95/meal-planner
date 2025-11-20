@@ -1,7 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import NavBar from '../../../components/common/NavBar';
-import Footer from '../../../components/common/Footer';
 
 
 const AppAccess = () => {
@@ -11,7 +10,6 @@ const AppAccess = () => {
             <main className="flex-grow">
                 <Outlet />
             </main>
-            <Footer />
         </div>
     );
 }

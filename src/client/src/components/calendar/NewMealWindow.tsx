@@ -19,11 +19,68 @@ const NewMealWindow = () => {
   const{ api, loading } = useApi();
   const location = useLocation();
   const { setMyMeals } = useCalendarEvents();
-  const state = location.state as {start: string, end: string};
-  const [title, setTitle] = useState<string>("");
-  const [start, setStart] = useState<Date | null>(new Date(state.start));
-  const [end, setEnd] = useState<Date | null>(new Date(state.end));
+  type NewMealState = { start?: string; end?: string; dishId?: number; dishName?: string } | null;
+  const state = (location.state as NewMealState) ?? null;
+  const stateDishId = state?.dishId;
+  const stateDishName = state?.dishName;
+
+  const getInitialDate = (dateString?: string) => {
+    if (!dateString) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    }
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) {
+      const fallback = new Date();
+      fallback.setHours(0, 0, 0, 0);
+      return fallback;
+    }
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  };
+
+  const initialStart = getInitialDate(state?.start);
+  const initialEnd = state?.end ? getInitialDate(state.end) : new Date(initialStart);
+
+  const [title, setTitle] = useState<string>(stateDishName ?? "");
+  const [start, setStart] = useState<Date | null>(initialStart);
+  const [end, setEnd] = useState<Date | null>(initialEnd);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const hasDish = !!selectedDish;
+
+  useEffect(() => {
+    const preloadDish = async () => {
+      if (!stateDishId) return;
+      if (selectedDish?.id === stateDishId) return;
+      try {
+        const dish = await api.dishes.getById(stateDishId);
+        if (dish) {
+          setSelectedDish(dish);
+          setTitle((prev) => (prev ? prev : dish.name));
+        }
+      } catch (error) {
+        console.error(`Unable to load dish ${stateDishId}`, error);
+      }
+    };
+    preloadDish();
+  }, [api.dishes.getById, selectedDish, stateDishId]);
+
+  useEffect(() => {
+    const hydrateDish = async () => {
+      if (!selectedDish?.id) return;
+      if (selectedDish.ingredientList && selectedDish.ingredientList.length > 0) return;
+      try {
+        const fullDish = await api.dishes.getById(selectedDish.id);
+        if (fullDish) {
+          setSelectedDish(fullDish);
+        }
+      } catch (error) {
+        console.error(`Unable to load dish ${selectedDish.id}`, error);
+      }
+    };
+    hydrateDish();
+  }, [api.dishes.getById, selectedDish]);
 
   const handleSave = async () => {
    
@@ -65,7 +122,7 @@ const NewMealWindow = () => {
         onClick={handleClose}
     >
         <div 
-            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
         >
             <h2 className="text-2xl font-bold text-gray-900 mb-6">New Meal Event</h2>
@@ -120,7 +177,18 @@ const NewMealWindow = () => {
                         setData={setSelectedDish} 
                         fetchAllSuggestions={api.dishes.get}
                         CustomComponent={DishAutocomplete}
+                        removeData={() => setSelectedDish(null)}
+                        getEditLink={(dish) => `${routes.dishes}/${routes.editDish(dish.id)}`}
                     />
+                {hasDish && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDish(null)}
+                    className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Remove dish
+                  </button>
+                )}
                 </div>
             </div>
             

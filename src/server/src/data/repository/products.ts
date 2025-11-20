@@ -12,7 +12,8 @@ export class ProductRepository extends SqlRepository<Product, ProductInput> {
         const [id] = await this.db('Products').insert({ 
                 name: r.name, 
                 measure: r.measure, 
-                price: r.price, 
+                price: r.price,
+                emoji: r.emoji || null,
                 userId: r.userId});
         return id;
     
@@ -27,7 +28,8 @@ export class ProductRepository extends SqlRepository<Product, ProductInput> {
             .update({
                 'name': r.name,
                 'price': r.price,
-                'measure': r.measure
+                'measure': r.measure,
+                'emoji': r.emoji || null
             });
     }
 
@@ -42,6 +44,7 @@ export class ProductRepository extends SqlRepository<Product, ProductInput> {
         if(r.name) updateFields.name = r.name;
         if(r.price) updateFields.price = r.price;
         if(r.measure) updateFields.measure = r.measure;
+        if(r.emoji !== undefined) updateFields.emoji = r.emoji || null;
         console.log(updateFields);
         if (Object.keys(updateFields).length > 0) {
             await query.update(updateFields);

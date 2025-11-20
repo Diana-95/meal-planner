@@ -19,6 +19,7 @@ import ErrorPage from './components/dishes/ErrorPage';
 
 import EditDish from './components/dishes/EditDish';
 import NewDish from './components/dishes/NewDish';
+import RecipeView from './components/dishes/RecipeView';
 
 import NewProduct from './components/products/NewProduct';
 
@@ -72,6 +73,11 @@ const router = createBrowserRouter([
                 errorElement: <ErrorPage />,
               },
               ]
+          },
+          {
+            path: 'dishes/view/:id',
+            element: <RecipeView />,
+            errorElement: <ErrorPage />,
           },
           {
             path: 'products',

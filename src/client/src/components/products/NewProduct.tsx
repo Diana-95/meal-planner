@@ -16,12 +16,13 @@ const NewProduct = () => {
     const [name, setName] = useState('');
     const [price, setPrice] = useState(0);
     const [measure, setMeasure] = useState('kg');
+    const [emoji, setEmoji] = useState('');
 
     const onClickSaveHandle = async () => {
-        const response = await api.products.create(name, measure, price );
+        const response = await api.products.create(name, measure, price, emoji || null);
         if(response) {
             toastInfo(`New product "${name}" was created`);
-            setProducts(prevProds => [...prevProds, {id: response.rowID, name, measure, price} satisfies Product])
+            setProducts(prevProds => [...prevProds, {id: response.rowID, name, measure, price, emoji: emoji || null} satisfies Product])
             
         }
         else { toastError('Failed to create product. Please try again.'); }
@@ -86,6 +87,21 @@ const NewProduct = () => {
                             <option value="gram">gram</option>
                             <option value="piece">piece</option>
                         </select>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Emoji (Optional)
+                        </label>
+                        <input
+                            type="text"
+                            value={emoji}
+                            onChange={(e) => setEmoji(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-2xl"
+                            placeholder="🍗"
+                            maxLength={2}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Enter an emoji to represent this product</p>
                     </div>
                 </div>
                 

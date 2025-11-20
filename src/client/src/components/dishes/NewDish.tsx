@@ -36,6 +36,39 @@ const NewDishWindow = () => {
     const onCloseHandle = () => {
         navigate(routes.dishes);
     }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check if file is an image
+      if (!file.type.startsWith('image/')) {
+        toastError('Please select an image file');
+        return;
+      }
+      
+      // Check file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        toastError(`Image file is too large. Maximum size is 10MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+        return;
+      }
+      
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImage(result);
+      };
+      reader.onerror = () => {
+        toastError('Failed to read image file');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setImage('');
+  }
     return (
         <div 
             data-testid="overlay" 
@@ -77,15 +110,75 @@ const NewDishWindow = () => {
                     
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Image URL
+                            Image
                         </label>
-                        <input
-                            type="text"
-                            value={imageUrl}
-                            onChange={(e) => setImage(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="Enter image URL"
-                        />
+                        {imageUrl ? (
+                            <div className="relative">
+                                <img
+                                    src={imageUrl}
+                                    alt={name || 'Dish preview'}
+                                    className="w-full h-64 object-cover rounded-md border border-gray-300"
+                                />
+                                <div className="mt-2 flex gap-2">
+                                    <label className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors font-medium cursor-pointer text-center">
+                                        Change Image
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveImage}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                                    >
+                                        Remove Image
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg
+                                            className="w-10 h-10 mb-3 text-gray-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        <p className="mb-2 text-sm text-gray-500">
+                                            <span className="font-semibold">Click to upload</span> or drag and drop
+                                        </p>
+                                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 10MB)</p>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                    />
+                                </label>
+                                <div className="mt-2">
+                                    <p className="text-xs text-gray-500 mb-1">Or enter image URL:</p>
+                                    <input
+                                        type="text"
+                                        value={imageUrl}
+                                        onChange={(e) => setImage(e.target.value)}
+                                        placeholder="https://example.com/image.jpg"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
                 

@@ -12,6 +12,7 @@ const routes = {
   cart: '/app/cart',
   editDish: (id: number) => `edit/${id}`,
   editMeal: (id: string | number) => `edit/${id}`,
+  viewRecipe: (id: number) => `/app/dishes/view/${id}`,
 };
 
 export default routes;
