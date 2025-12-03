@@ -5,3 +5,12 @@ src/server/src/scripts/add-emojis-to-products.ts
 src/server/src/scripts/check-products.ts
 src/server/src/scripts/seed-dishes.ts
 src/server/src/scripts/seed-products.ts
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+src/server/.env
+src/client/.env

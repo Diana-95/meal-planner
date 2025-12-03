@@ -14,11 +14,13 @@ import { registerUserController } from "./controllers/users";
 import cookieParser from 'cookie-parser';
 
 
-const port = 4000;
+const port = process.env.SERVER_PORT ? parseInt(process.env.SERVER_PORT, 10) : 4000;
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+const serverUrl = process.env.SERVER_URL || 'http://localhost:4000';
 const expressApp: Express = express();
 
 
-expressApp.use(cors({ origin: 'http://localhost:3000', credentials: true, }));
+expressApp.use(cors({ origin: clientUrl, credentials: true, }));
 
 expressApp.use(
   helmet({
@@ -28,7 +30,7 @@ expressApp.use(
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "http://localhost:4000"],
+        connectSrc: ["'self'", serverUrl],
         fontSrc: ["'self'"],
         frameAncestors: ["'none'"],
       },
