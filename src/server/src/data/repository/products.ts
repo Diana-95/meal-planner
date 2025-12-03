@@ -9,13 +9,16 @@ export interface ProductQueryParams extends QueryParams {
 export class ProductRepository extends SqlRepository<Product, ProductInput> {
 
     async create(r: Product): Promise<number> {
-        const [id] = await this.db('Products').insert({ 
+        const [inserted] = await this.db('Products')
+            .insert({ 
                 name: r.name, 
                 measure: r.measure, 
                 price: r.price,
                 emoji: r.emoji || null,
-                userId: r.userId});
-        return id;
+                userId: r.userId
+            })
+            .returning("id");
+        return typeof inserted === "number" ? inserted : inserted.id;
     
     }
 

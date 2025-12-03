@@ -1,25 +1,25 @@
-// test-utils/dbSetup.ts
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import { Knex } from "knex";
+import { newDb } from "pg-mem";
 
-export async function setupTestDB() {
-  const db = await open({
-    filename: ':memory:',
-    driver: sqlite3.Database
+export async function setupTestDB(): Promise<Knex> {
+  const pg = newDb({
+    autoCreateForeignKeyIndices: true,
   });
 
-  // Create schema
-  await db.exec(`
-    CREATE TABLE products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      price REAL NOT NULL
-    );
-  `);
+  const knexInstance = pg.adapters.createKnex() as Knex;
 
-  // Seed data
-  await db.run(`INSERT INTO products (name, price) VALUES (?, ?)`, ['Pizza', 9.99]);
-  await db.run(`INSERT INTO products (name, price) VALUES (?, ?)`, ['Burger', 7.5]);
+  await knexInstance.schema.createTable("Products", (table) => {
+    table.increments("id").primary();
+    table.string("name").notNullable();
+    table.string("measure").notNullable().defaultTo("unit");
+    table.decimal("price", 10, 2).notNullable();
+    table.integer("userId").notNullable().defaultTo(1);
+  });
 
-  return db;
+  await knexInstance("Products").insert([
+    { name: "Pizza", measure: "unit", price: 9.99, userId: 1 },
+    { name: "Burger", measure: "unit", price: 7.5, userId: 1 },
+  ]);
+
+  return knexInstance;
 }

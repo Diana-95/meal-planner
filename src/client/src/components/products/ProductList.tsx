@@ -107,21 +107,67 @@ const ProductList = () => {
   };
   
   return (
-    <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Products List</h2>
-          <p className="mt-1 text-sm text-gray-500">Manage your grocery products and prices</p>
-        </div>
-        <button 
-          onClick={handleAddProduct}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
-        >
-          + Add New Product
-        </button>
+    <>
+    <div className="pt-16 md:pt-20 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Products List</h2>
+        <p className="mt-1 text-xs sm:text-sm text-gray-500">Manage your grocery products and prices</p>
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Mobile Card Layout */}
+      <div className="md:hidden space-y-3">
+        {products.map((product) => (
+          <div 
+            key={product.id} 
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {product.emoji && (
+                  <span className="text-2xl flex-shrink-0" role="img" aria-label={product.name}>
+                    {product.emoji}
+                  </span>
+                )}
+                <h3 className="text-sm font-semibold text-gray-900 truncate">{product.name}</h3>
+              </div>
+              <button 
+                onClick={() => handleDeleteProduct(product.id)}
+                className="text-red-600 hover:text-red-900 font-medium text-sm flex-shrink-0 px-2 py-1"
+              >
+                Delete
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Price</label>
+                <input
+                  type="number"
+                  value={product.price}
+                  onChange={(e) => handlePriceChange(product.id, parseFloat(e.target.value))}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  step="0.01"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">Measure</label>
+                <select
+                  value={product.measure}
+                  onChange={(e) => handleMeasureChange(product.id, e.target.value as 'kg' | 'gram' | 'piece')}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="kg">kg</option>
+                  <option value="gram">gram</option>
+                  <option value="piece">piece</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table Layout */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -143,6 +189,14 @@ const ProductList = () => {
       </div>
       <Outlet />
     </div>
+    <button 
+      onClick={handleAddProduct}
+      className="fixed bottom-8 right-8 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium flex items-center gap-2 z-50"
+    >
+      <span className="text-lg leading-none">＋</span>
+      <span>Create New Product</span>
+    </button>
+    </>
   );
 };
 

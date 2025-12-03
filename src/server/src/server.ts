@@ -20,7 +20,21 @@ const expressApp: Express = express();
 
 expressApp.use(cors({ origin: 'http://localhost:3000', credentials: true, }));
 
-expressApp.use(helmet());
+expressApp.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "http://localhost:4000"],
+        fontSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+  })
+);
 expressApp.use(express.json());
 expressApp.use(cookieParser());
 expressApp.use('/api', protectedRoutes);

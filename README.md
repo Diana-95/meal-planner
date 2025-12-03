@@ -6,7 +6,7 @@ A full-stack meal planning application with React frontend and Node.js/Express b
 
 - **Node.js** (v20 or higher recommended)
 - **npm** (comes with Node.js)
-- **SQLite3** (usually comes with Node.js, but may need to be installed separately on some systems)
+- **PostgreSQL** 13+ (local install or Docker container)
 
 ## Project Structure
 
@@ -42,29 +42,60 @@ cd src/server
 touch .env
 ```
 
-Add the following environment variables to `.env`:
+Add the following environment variables to `.env` (adjust as needed for your Postgres server):
 
 ```env
-DB_FILEPATH=./meals.db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/meal_planner
+PGSSLMODE=disable
 JWT_SECRET_KEY=your_secret_key_here
 ```
 
 **Note:** 
-- `DB_FILEPATH` should point to your SQLite database file. The default is `./meals.db` (relative to the server directory).
+- You can omit `DATABASE_URL` and instead provide `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE` if you prefer discrete values.
+- Set `PGSSLMODE=require` when connecting to managed/cloud databases that demand TLS. Use `PGSSL_REJECT_UNAUTHORIZED=false` if you need to skip certificate validation (not recommended for production).
 - `JWT_SECRET_KEY` is used for JWT token signing. Use a strong, random string in production.
 
 ### 3. Database Setup
 
-The database file (`meals.db`) should already exist in the `src/server` directory. If you need to recreate it, you can use the `meals.sql` schema file.
+1. Start a Postgres instance locally (Docker example):
+   ```bash
+   docker run --name meal-planner-db \
+     -e POSTGRES_PASSWORD=postgres \
+     -e POSTGRES_DB=meal_planner \
+     -p 5432:5432 -d postgres:16
+   ```
+2. Compile the server and apply the schema:
+   ```bash
+   cd src/server
+   npm run build
+   node dist/scripts/reset-db.js
+   ```
+3. (Optional) Populate demo data:
+   ```bash
+   npm run seed:products
+   npm run seed:dishes
+   ```
 
-To initialize/reset the database (if needed):
-```bash
-cd src/server
-# If you have a script to run the SQL file, use it
-# Otherwise, you can manually run the SQL commands from meals.sql
-```
+For one-time migration instructions from `meals.db`, see `src/server/docs/sqlite-to-postgres.md`.
 
 ## Running the Application
+
+### Option A: Docker Compose (Postgres + API + Client)
+
+1. Build and start everything:
+   ```bash
+   docker compose up --build
+   ```
+2. Services:
+   - Client: http://localhost:3000
+   - API: http://localhost:4000/api
+   - Postgres: localhost:5433 (user/password `meal`)
+3. To stop containers:
+   ```bash
+   docker compose down
+   ```
+
+> The compose file uses a production build of the API and the CRA dev server for the UI. Edit `docker-compose.yml` if you need different env vars/secrets.
 
 ### Start the Server
 
@@ -119,8 +150,9 @@ The server is configured to accept requests from `http://localhost:3000` (CORS).
 
 If you encounter database errors:
 1. Make sure the `.env` file exists in `src/server`
-2. Check that `DB_FILEPATH` points to the correct database file
-3. Ensure the database file has the correct schema (see `meals.sql`)
+2. Confirm the Postgres instance is running and `DATABASE_URL` (or the discrete env vars) are correct
+3. Re-run `node dist/scripts/reset-db.js` to recreate the schema if necessary
+4. Review `src/server/docs/sqlite-to-postgres.md` for migration/reset tips
 
 ### Port Already in Use
 

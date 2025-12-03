@@ -13,21 +13,28 @@ export const registerFormMiddleware = (app: Express) => {
 }
 
 const signToken = (userId: number, username: string, email: string, res: Response) => {
+    const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+    
+    if (!JWT_SECRET_KEY || JWT_SECRET_KEY === 'your_secret_key') {
+        throw new Error('JWT_SECRET_KEY environment variable must be set to a secure value');
+    }
+
     const userJWTPayload: MyJWTPayload = {
         userId,
         username,
         email
     }
-    const token = jwt.sign(userJWTPayload, 'your_secret_key', {
-        expiresIn: '1h',
+    const token = jwt.sign(userJWTPayload, JWT_SECRET_KEY, {
+        expiresIn: '24h',
     });
 
-        // set cookies after registration
+    // Set cookies after registration/login
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('authToken', token, {
         httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
-        secure: false, // Use HTTPS in production
-        sameSite: 'lax', // Prevent cross-site request forgery
-        maxAge: 60 * 60 * 1000, // 1 hour
+        secure: isProduction, // Only send over HTTPS in production
+        sameSite: isProduction ? 'strict' : 'lax', // Stricter in production
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 }
 
@@ -39,6 +46,8 @@ export const registerUserController = (app: Express) => {
         const isUserExists = await userRepository.isUserExists(username, email);
         if(isUserExists) 
             return res.status(401).json({ error: 'User already exists' });
+        // Security: Use bcrypt for password hashing (NOT md5, sha1, or sha256)
+        // bcrypt is purpose-built for passwords with automatic salting and adjustable cost
         const hashedPassword = await bcrypt.hash(password, 10);
         const user: User = {
             id: 0,
@@ -61,6 +70,7 @@ export const registerUserController = (app: Express) => {
         if (!user) {
             return res.status(401).json({ error: 'Authentication failed' });
         }
+        // Security: Use bcrypt.compare() to verify passwords against stored bcrypt hashes
         const passwordMatch = await bcrypt.compare(password, user.password_hash);
         if (!passwordMatch) {
             return res.status(401).json({ error: 'Authentication failed' });

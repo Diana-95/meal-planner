@@ -1,19 +1,34 @@
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import { useUser } from '../../context/UserContextProvider';
 import routes from '../../routes/routes';
 
 
 const Root = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const {user} = useUser();
+    
     useEffect(() => {
+      const currentPath = location.pathname;
+      const isAuthPage = currentPath === routes.authentification || currentPath === '/';
+      const isAppPage = currentPath.startsWith('/app');
       
       if (user) {
-        navigate(routes.home); // Automatically redirect to home page if authenticated
+        // Only redirect to home if we're on the auth page or root
+        // Don't redirect if already on an app page
+        if (isAuthPage) {
+          navigate(routes.home, { replace: true });
+        }
+      } else {
+        // Only redirect to auth if we're trying to access app pages
+        // Don't redirect if already on auth page
+        if (isAppPage && !isAuthPage) {
+          navigate(routes.authentification, { replace: true });
+        }
       }
-      else navigate(routes.authentification);
-    }, [navigate, user]);
+    }, [navigate, user, location.pathname]);
+    
     return (
         <div className="min-h-screen bg-gray-50 pb-16">
             <Outlet />

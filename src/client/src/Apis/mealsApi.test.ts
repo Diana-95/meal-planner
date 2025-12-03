@@ -24,15 +24,35 @@ import {
       const startDate = '2023-01-01';
       const endDate = '2023-01-02';
       const name = 'Test Meal';
-      const dishId = 3;
+      const dishIds = [3, 5, 7];
   
-      const result = await createMeal(name, startDate, endDate, dishId);
+      const result = await createMeal(name, startDate, endDate, dishIds);
   
       expect(axiosInstance.post).toHaveBeenCalledWith('/meals', {
         name,
         startDate,
         endDate,
-        dishId
+        dishIds: dishIds
+      });
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    test('createMeal calls axiosInstance.post with empty dishIds array', async () => {
+      const mockResponse = { data: { rowID: 102 } };
+      (axiosInstance.post as jest.Mock).mockResolvedValue(mockResponse);
+  
+      const startDate = '2023-01-01';
+      const endDate = '2023-01-02';
+      const name = 'Test Meal';
+      const dishIds: number[] = [];
+  
+      const result = await createMeal(name, startDate, endDate, dishIds);
+  
+      expect(axiosInstance.post).toHaveBeenCalledWith('/meals', {
+        name,
+        startDate,
+        endDate,
+        dishIds: []
       });
       expect(result).toEqual(mockResponse.data);
     });
@@ -45,15 +65,36 @@ import {
       const startDate = '2023-01-10';
       const endDate = '2023-01-11';
       const name = 'Updated Meal';
-      const dishId = 5;
+      const dishIds = [5, 8, 12];
   
-      const result = await updateMeal(id, startDate, endDate, name, dishId);
+      const result = await updateMeal(id, startDate, endDate, name, dishIds);
   
       expect(axiosInstance.put).toHaveBeenCalledWith(`/meals/${id}`, {
         startDate,
         endDate,
         name,
-        dishId,
+        dishIds: dishIds,
+      });
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    test('updateMeal calls axiosInstance.put with empty dishIds array', async () => {
+      const mockResponse = { data: { rowID: 103 } };
+      (axiosInstance.put as jest.Mock).mockResolvedValue(mockResponse);
+  
+      const id = 1;
+      const startDate = '2023-01-10';
+      const endDate = '2023-01-11';
+      const name = 'Updated Meal';
+      const dishIds: number[] = [];
+  
+      const result = await updateMeal(id, startDate, endDate, name, dishIds);
+  
+      expect(axiosInstance.put).toHaveBeenCalledWith(`/meals/${id}`, {
+        startDate,
+        endDate,
+        name,
+        dishIds: [],
       });
       expect(result).toEqual(mockResponse.data);
     });
@@ -67,15 +108,36 @@ import {
       const startDate = '2023-02-01';
       const endDate = '2023-02-02';
       const name = 'Partial Update Meal';
-      const dishId = null;
+      const dishIds = undefined;
   
-      const result = await updateMealPart(id, startDate, endDate, name, dishId);
+      const result = await updateMealPart(id, startDate, endDate, name, dishIds);
   
       expect(axiosInstance.patch).toHaveBeenCalledWith(`/meals/${id}`, {
         startDate,
         endDate,
         name,
-        dishId,
+        dishIds,
+      });
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    test('updateMealPart calls axiosInstance.patch with multiple dishIds', async () => {
+      const mockResponse = { data: undefined };
+      (axiosInstance.patch as jest.Mock).mockResolvedValue(mockResponse);
+  
+      const id = 2;
+      const startDate = '2023-02-01';
+      const endDate = '2023-02-02';
+      const name = 'Partial Update Meal';
+      const dishIds = [1, 2, 3, 4];
+  
+      const result = await updateMealPart(id, startDate, endDate, name, dishIds);
+  
+      expect(axiosInstance.patch).toHaveBeenCalledWith(`/meals/${id}`, {
+        startDate,
+        endDate,
+        name,
+        dishIds: [1, 2, 3, 4],
       });
       expect(result).toEqual(mockResponse.data);
     });
@@ -106,7 +168,16 @@ import {
     });
   
     test('getMealById calls axiosInstance.get with correct URL and returns response data', async () => {
-      const meal = { id: 1, startDate: '2023-04-01', endDate: '2023-04-02', name: 'Meal 1' };
+      const meal = { 
+        id: 1, 
+        startDate: '2023-04-01', 
+        endDate: '2023-04-02', 
+        name: 'Meal 1',
+        dishes: [
+          { id: 1, name: 'Dish 1', recipe: 'Recipe 1', imageUrl: 'url1', ingredientList: [] },
+          { id: 2, name: 'Dish 2', recipe: 'Recipe 2', imageUrl: 'url2', ingredientList: [] }
+        ]
+      };
       const mockResponse = { data: meal };
       (axiosInstance.get as jest.Mock).mockResolvedValue(mockResponse);
   
@@ -115,6 +186,7 @@ import {
   
       expect(axiosInstance.get).toHaveBeenCalledWith(`/meals/${id}`);
       expect(result).toEqual(meal);
+      expect(result.dishes).toHaveLength(2);
     });
   });
   

@@ -3,7 +3,7 @@ import { Meal } from "../../entity/meal";
 import { QueryParams } from "../repository";
 import { Dish } from "../../entity/dish";
 
-export type MealInput = Omit<Meal, 'dish'> & { dishId : number | null , userId: number};
+export type MealInput = Omit<Meal, 'dishes'> & { dishIds?: number[], userId: number};
 export class MealRepository extends SqlRepository<Meal, MealInput> {
     
     async delete(id: number, userId: number): Promise<number> {
@@ -16,15 +16,30 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
     }
 
     async create(r: MealInput): Promise<number> {
-        
-        const [id] = await this.db('Meals').insert({
-            name: r.name, 
-            startDate: r.startDate, 
-            endDate: r.endDate, 
-            dishId: r.dishId, 
-            userId: r.userId
-        });
-        return id;
+        // Insert meal without dishId (using MealDishes junction table instead)
+        const [inserted] = await this.db('Meals')
+            .insert({
+                name: r.name, 
+                startDate: r.startDate, 
+                endDate: r.endDate, 
+                dishId: null, // No longer using dishId column
+                userId: r.userId
+            })
+            .returning("id");
+        const mealId = typeof inserted === "number" ? inserted : inserted.id;
+
+        // Insert dish associations into MealDishes junction table
+        const dishIds = r.dishIds || [];
+        if (dishIds.length > 0) {
+            const mealDishes = dishIds.map(dishId => ({
+                mealId,
+                dishId,
+                userId: r.userId
+            }));
+            await this.db('MealDishes').insert(mealDishes);
+        }
+
+        return mealId;
     }
 
     async updatePatch(r: MealInput): Promise<void> {
@@ -38,10 +53,27 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
         if (r.name) updateFields.name = r.name;
         if (r.startDate) updateFields.startDate = r.startDate;
         if (r.endDate) updateFields.endDate = r.endDate;
-        if (r.dishId) updateFields.dishId = r.dishId;
 
         if (Object.keys(updateFields).length > 0) {
             await query.update(updateFields);
+        }
+
+        // Update dish associations if dishIds is provided
+        if (r.dishIds !== undefined) {
+            // Remove all existing dish associations
+            await this.db('MealDishes')
+                .where({ mealId: r.id, userId: r.userId })
+                .del();
+
+            // Insert new dish associations
+            if (r.dishIds.length > 0) {
+                const mealDishes = r.dishIds.map(dishId => ({
+                    mealId: r.id,
+                    dishId,
+                    userId: r.userId
+                }));
+                await this.db('MealDishes').insert(mealDishes);
+            }
         }
     }
 
@@ -54,8 +86,23 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
             "name": r.name,
             "startDate": r.startDate,
             "endDate": r.endDate,
-            "dishId": r.dishId
-        })
+            "dishId": null // No longer using dishId column
+        });
+
+        // Replace all dish associations
+        await this.db('MealDishes')
+            .where({ mealId: r.id, userId: r.userId })
+            .del();
+
+        const dishIds = r.dishIds || [];
+        if (dishIds.length > 0) {
+            const mealDishes = dishIds.map(dishId => ({
+                mealId: r.id,
+                dishId,
+                userId: r.userId
+            }));
+            await this.db('MealDishes').insert(mealDishes);
+        }
     }
 
     async get(cursor: number| undefined, limit: number, query: QueryParams = {}): Promise<Meal[]> { 
@@ -79,7 +126,8 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
         const normalizedEnd = normalizeDateParam(endDate);
 
         const rowsQuery = this.db('Meals')
-            .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
+            .leftJoin('MealDishes', 'Meals.id', 'MealDishes.mealId')
+            .leftJoin('Dishes', 'MealDishes.dishId', 'Dishes.id')
             .select(
                 'Meals.id AS mealId',
                 'Meals.name AS mealName', 
@@ -104,11 +152,15 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
         }
 
         if (searchName) {
-            rowsQuery.andWhere('Meals.name', 'like', `%${searchName}%`);
+            rowsQuery.andWhereILike('Meals.name', `%${searchName}%`);
         }
 
         const rows = await rowsQuery;
-        return rows.map((row: {
+        
+        // Group dishes by meal
+        const mealMap = new Map<number, Meal>();
+        
+        rows.forEach((row: {
             mealId: number;
             mealName: string;
             startDate: string | number;
@@ -118,26 +170,38 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
             dishName: string | null;
             recipe: string | null;
             imageUrl: string | null;
-        }) => ({
-            id: row.mealId,
-            name: row.mealName,
-            startDate: typeof row.startDate === 'string' ? new Date(row.startDate).getTime() : row.startDate,
-            endDate: typeof row.endDate === 'string' ? new Date(row.endDate).getTime() : row.endDate,
-            dish: row.dishId ? {
-                id: row.dishId,
-                name: row.dishName || '',
-                recipe: row.recipe || '',
-                imageUrl: row.imageUrl || '',
-                userId: userId
-            } : null
-        } as Meal));
+        }) => {
+            if (!mealMap.has(row.mealId)) {
+                mealMap.set(row.mealId, {
+                    id: row.mealId,
+                    name: row.mealName,
+                    startDate: typeof row.startDate === 'string' ? new Date(row.startDate).getTime() : row.startDate,
+                    endDate: typeof row.endDate === 'string' ? new Date(row.endDate).getTime() : row.endDate,
+                    dishes: []
+                });
+            }
+            
+            const meal = mealMap.get(row.mealId)!;
+            if (row.dishId) {
+                meal.dishes.push({
+                    id: row.dishId,
+                    name: row.dishName || '',
+                    recipe: row.recipe || '',
+                    imageUrl: row.imageUrl || '',
+                    userId: userId
+                } as Dish);
+            }
+        });
+        
+        return Array.from(mealMap.values());
       
     }
     
 
     async getById(id: number, userId: number): Promise<Meal> {
-        const row = await this.db('Meals')
-                        .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
+        const rows = await this.db('Meals')
+                        .leftJoin('MealDishes', 'Meals.id', 'MealDishes.mealId')
+                        .leftJoin('Dishes', 'MealDishes.dishId', 'Dishes.id')
                         .select('Meals.id AS mealId',
                             'Meals.name AS mealName', 
                             'Meals.startDate', 
@@ -148,24 +212,35 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
                             'Dishes.recipe AS recipe', 
                             'Dishes.imageUrl AS imageUrl'
                         )
-                        .where({
-                            'mealId': id,
-                            'mealUserId': userId
-                        })
-                        .first();
-        return ({
-            id: row.mealId,
-            name: row.mealName,
-            startDate: row.startDate,
-            endDate: row.endDate,
-            dish: ({
+                        .where('Meals.id', id)
+                        .andWhere('Meals.userId', userId);
+        
+        if (rows.length === 0) {
+            throw new Error(`Meal with id ${id} not found for user ${userId}`);
+        }
+
+        const firstRow = rows[0];
+        const dishes: Dish[] = rows
+            .filter((row: any) => row.dishId !== null)
+            .map((row: any) => ({
                 id: row.dishId,
                 name: row.dishName,
                 recipe: row.recipe,
                 imageUrl: row.imageUrl,
                 userId: userId
-            } as Dish)
-        } as Meal);
+            } as Dish));
+
+        return {
+            id: firstRow.mealId,
+            name: firstRow.mealName,
+            startDate: typeof firstRow.startDate === 'string' 
+                ? new Date(firstRow.startDate).getTime() 
+                : firstRow.startDate,
+            endDate: typeof firstRow.endDate === 'string' 
+                ? new Date(firstRow.endDate).getTime() 
+                : firstRow.endDate,
+            dishes
+        } as Meal;
     }
 
     /**
@@ -180,9 +255,10 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
         totalQuantity: number;
     }>> {
         // Use SQL GROUP BY and SUM to aggregate ingredients directly in the database
-        // Join: Meals -> Dishes -> Ingredients -> Products
+        // Join: Meals -> MealDishes -> Dishes -> Ingredients -> Products
         const rows = await this.db('Meals')
-            .leftJoin('Dishes', 'Meals.dishId', 'Dishes.id')
+            .leftJoin('MealDishes', 'Meals.id', 'MealDishes.mealId')
+            .leftJoin('Dishes', 'MealDishes.dishId', 'Dishes.id')
             .leftJoin('Ingredients', 'Dishes.id', 'Ingredients.dishId')
             .leftJoin('Products', 'Ingredients.productId', 'Products.id')
             .select(
@@ -203,13 +279,13 @@ export class MealRepository extends SqlRepository<Meal, MealInput> {
             productId: number;
             productName: string;
             measure: string | null;
-            price: number | null;
-            totalQuantity: number | string; // SQLite returns SUM as string sometimes
+            price: number | string | null; // Postgres NUMERIC can return as string
+            totalQuantity: number | string; // Aggregation can return strings depending on driver
         }) => ({
             productId: row.productId,
             productName: row.productName,
             measure: row.measure || 'unit',
-            price: row.price || 0,
+            price: typeof row.price === 'string' ? parseFloat(row.price) : (row.price || 0),
             totalQuantity: typeof row.totalQuantity === 'string' ? parseFloat(row.totalQuantity) : row.totalQuantity
         }));
     }

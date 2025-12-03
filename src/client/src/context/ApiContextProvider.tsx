@@ -7,7 +7,7 @@ import { createProduct, deleteProduct, getAllProducts, getProductById, updatePro
 import { createIngredient, deleteIngredient, getIngredients, updateIngredient } from '../apis/ingredientsApi';
 import { useNavigate } from 'react-router-dom';
 import routes from '../routes/routes';
-import { getCurrentUser, loginUser, registerUser } from '../apis/usersApi';
+import { getCurrentUser, loginUser, registerUser, updateUserPart } from '../apis/usersApi';
 import { toastError } from '../components/common/toastService';
 import { User } from '../types/types';
 
@@ -131,6 +131,7 @@ export const useApi = () => {
       create: handleApiCall(registerUser),
       login: handleApiCall(loginUser),
       get: handleApiCall(getCurrentUser),
+      update: handleApiCall(updateUserPart),
     }
     // Add more entities similarly
   }), [handleApiCall]);

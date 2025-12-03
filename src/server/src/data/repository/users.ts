@@ -18,14 +18,15 @@ export class UserRepository extends SqlRepository<User> {
     }
 
     async create(r: User): Promise<number> {
-        const [id] = await this.db('Users')
+        const [inserted] = await this.db('Users')
             .insert({
                 username: r.username, 
                 email: r.email, 
                 password_hash: r.password_hash, 
                 role: r.role ? r.role : 'user'
-        });
-        return id;
+        })
+            .returning("id");
+        return typeof inserted === "number" ? inserted : inserted.id;
     }
 
     async update(r: User): Promise<void> {

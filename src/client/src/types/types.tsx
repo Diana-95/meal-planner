@@ -16,7 +16,7 @@ export interface Meal {
     name: string;
     startDate: string;
     endDate: string;
-    dish: Dish | null;
+    dishes: Dish[];
 }
 
 export interface Product {

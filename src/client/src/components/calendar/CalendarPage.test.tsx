@@ -39,7 +39,7 @@ jest.mock('react-big-calendar/lib/addons/dragAndDrop', () => {
                 start: new Date('2025-05-05'),
                 end: new Date('2025-05-06'),
                 allDay: true,
-                dish: null,
+                dishes: [],
             })}>
                 Trigger Event Click
             </button>
@@ -93,13 +93,13 @@ describe('CalendarPage', () => {
             name: 'Test Meal',
             startDate: new Date('2025-05-05').toISOString(),
             endDate: new Date('2025-05-06').toISOString(),
-            dish: {
+            dishes: [{
                 id: 1,
                 name: 'Test Dish',
                 recipe: 'Test Recipe',
                 imageUrl: 'test-image-url',
                 ingredientList: [],
-            },
+            }],
         },
     ];
     const mockCalendarEvents = [
@@ -108,12 +108,12 @@ describe('CalendarPage', () => {
             'start': new Date('2025-05-05'), 
             'end': new Date('2025-05-06'), 
             'allDay': true, 
-            'dish': { id: 1, 
+            'dishes': [{ id: 1, 
                     name: 'Test Dish', 
                     recipe: 'Test Recipe', 
                     imageUrl: 'test-image-url', 
                     ingredientList: [] 
-                } 
+                }] 
         }];
     beforeEach(() => {
         jest.clearAllMocks();

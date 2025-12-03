@@ -5,5 +5,5 @@ export interface Meal {
     name: string,
     startDate: number,
     endDate: number,
-    dish: Dish | null
+    dishes: Dish[]
 }

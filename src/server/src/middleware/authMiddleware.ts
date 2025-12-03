@@ -21,7 +21,11 @@ const verifyToken = (req: AuthRequest, res: Response, next: NextFunction): void 
   }
 
   try {
-    const secretKey = process.env.JWT_SECRET_KEY || 'your_secret_key';
+    const secretKey = process.env.JWT_SECRET_KEY;
+    if (!secretKey || secretKey === 'your_secret_key') {
+      res.status(500).json({ message: 'Server configuration error: JWT secret not properly configured.' });
+      return;
+    }
     const decodedUser = jwt.verify(token, secretKey) as MyJWTPayload;
     req.user = decodedUser; // Attach the user data to the request object
     console.log('verify token user=', decodedUser)

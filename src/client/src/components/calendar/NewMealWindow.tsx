@@ -46,17 +46,17 @@ const NewMealWindow = () => {
   const [title, setTitle] = useState<string>(stateDishName ?? "");
   const [start, setStart] = useState<Date | null>(initialStart);
   const [end, setEnd] = useState<Date | null>(initialEnd);
-  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const hasDish = !!selectedDish;
+  const [selectedDishes, setSelectedDishes] = useState<Dish[]>([]);
+  const [tempDish, setTempDish] = useState<Dish | null>(null); // Temporary selection before adding to list
 
   useEffect(() => {
     const preloadDish = async () => {
       if (!stateDishId) return;
-      if (selectedDish?.id === stateDishId) return;
+      if (selectedDishes.some(d => d.id === stateDishId)) return;
       try {
         const dish = await api.dishes.getById(stateDishId);
         if (dish) {
-          setSelectedDish(dish);
+          setSelectedDishes([dish]);
           setTitle((prev) => (prev ? prev : dish.name));
         }
       } catch (error) {
@@ -64,23 +64,34 @@ const NewMealWindow = () => {
       }
     };
     preloadDish();
-  }, [api.dishes.getById, selectedDish, stateDishId]);
+  }, [api.dishes.getById, stateDishId, selectedDishes]);
 
   useEffect(() => {
     const hydrateDish = async () => {
-      if (!selectedDish?.id) return;
-      if (selectedDish.ingredientList && selectedDish.ingredientList.length > 0) return;
+      if (!tempDish?.id) return;
+      if (tempDish.ingredientList && tempDish.ingredientList.length > 0) return;
       try {
-        const fullDish = await api.dishes.getById(selectedDish.id);
+        const fullDish = await api.dishes.getById(tempDish.id);
         if (fullDish) {
-          setSelectedDish(fullDish);
+          setTempDish(fullDish);
         }
       } catch (error) {
-        console.error(`Unable to load dish ${selectedDish.id}`, error);
+        console.error(`Unable to load dish ${tempDish.id}`, error);
       }
     };
     hydrateDish();
-  }, [api.dishes.getById, selectedDish]);
+  }, [api.dishes.getById, tempDish]);
+
+  const handleAddDish = () => {
+    if (tempDish && !selectedDishes.some(d => d.id === tempDish.id)) {
+      setSelectedDishes([...selectedDishes, tempDish]);
+      setTempDish(null);
+    }
+  };
+
+  const handleRemoveDish = (dishId: number) => {
+    setSelectedDishes(selectedDishes.filter(d => d.id !== dishId));
+  };
 
   const handleSave = async () => {
    
@@ -91,7 +102,8 @@ const NewMealWindow = () => {
         
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0 ,0, 0);
-    const response = await api.meals.create(title, start.toISOString(), end.toISOString(), selectedDish?.id);
+    const dishIds = selectedDishes.map(d => d.id);
+    const response = await api.meals.create(title, start.toISOString(), end.toISOString(), dishIds);
 
     if(!response) {
       toastInfo('Failed to create meal. Please try again.');
@@ -106,7 +118,7 @@ const NewMealWindow = () => {
         title,
         start,
         end,
-        dish: selectedDish
+        dishes: selectedDishes
       } satisfies MyMeal
     ])
 
@@ -170,25 +182,46 @@ const NewMealWindow = () => {
                 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Dish (Optional)
+                        Dishes (Optional)
                     </label>
-                    <Autocomplete<Dish>
-                        data={selectedDish} 
-                        setData={setSelectedDish} 
-                        fetchAllSuggestions={api.dishes.get}
-                        CustomComponent={DishAutocomplete}
-                        removeData={() => setSelectedDish(null)}
-                        getEditLink={(dish) => `${routes.dishes}/${routes.editDish(dish.id)}`}
-                    />
-                {hasDish && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDish(null)}
-                    className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Remove dish
-                  </button>
-                )}
+                    <div className="space-y-2">
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <Autocomplete<Dish>
+                                    data={tempDish} 
+                                    setData={setTempDish} 
+                                    fetchAllSuggestions={api.dishes.get}
+                                    CustomComponent={DishAutocomplete}
+                                    removeData={() => setTempDish(null)}
+                                    getEditLink={(dish) => routes.editDish(dish.id)}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleAddDish}
+                                disabled={!tempDish || selectedDishes.some(d => d.id === tempDish.id)}
+                                className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                            >
+                                Add
+                            </button>
+                        </div>
+                        {selectedDishes.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                {selectedDishes.map((dish) => (
+                                    <div key={dish.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
+                                        <span className="text-sm text-gray-900">{dish.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveDish(dish.id)}
+                                            className="text-xs text-red-600 hover:text-red-700 font-medium"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             

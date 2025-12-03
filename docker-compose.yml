@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: meal_planner
+      POSTGRES_USER: meal
+      POSTGRES_PASSWORD: meal
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  server:
+    build:
+      context: ./src/server
+      dockerfile: Dockerfile
+    # Load environment variables from .env file (recommended)
+    # Create src/server/.env with: JWT_SECRET_KEY=your-generated-secret-here
+    env_file:
+      - ./src/server/.env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://meal:meal@postgres:5432/meal_planner
+      PGSSLMODE: disable
+      # JWT_SECRET_KEY should be set via .env file or environment variable
+      # DO NOT hardcode secrets here - use: JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+
+  client:
+    build:
+      context: ./src/client
+      dockerfile: Dockerfile
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WDS_SOCKET_PORT: "0"
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+

@@ -54,8 +54,15 @@ const getEventColorClass = (id: number) =>
 const CustomEvent = ({ event }: { event: MyMeal }) => (
   <div className={`calendar-event-card ${getEventColorClass(event.id)}`}>
     <div className="calendar-event-title">{event.title}</div>
-    {event.dish?.name && (
-      <div className="calendar-event-dish">{event.dish.name}</div>
+    {event.dishes && event.dishes.length > 0 && (
+      <div className="calendar-event-dish">
+        {event.dishes.map((dish, idx) => (
+          <span key={dish.id}>
+            {dish.name}
+            {idx < event.dishes!.length - 1 && ', '}
+          </span>
+        ))}
+      </div>
     )}
   </div>
 );
@@ -65,7 +72,7 @@ export interface MyMeal extends Event {
   title: string;
   start: Date;
   end: Date;
-  dish?: Dish | null;
+  dishes?: Dish[];
 }
 const DragAndDropCalendar = withDragAndDrop<MyMeal>(Calendar);
 
@@ -124,7 +131,7 @@ const CalendarPage = () => {
           start: new Date(meal.startDate),
           end: new Date(meal.endDate),
           allDay: true,
-          dish: meal.dish
+          dishes: meal.dishes || []
         } as MyMeal));
         setMyMeals(loadedMyMeals);
       }

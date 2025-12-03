@@ -2,7 +2,6 @@ import { axiosInstanceAuth } from './utils';
 import { User } from '../types/types';
 
 export const registerUser = async (username: string, email: string, password: string) => {
-  console.log('/register', username, email, password);
     const response = await axiosInstanceAuth.post<{ rowID: number }>('/register', {
       username,
       email,
@@ -20,7 +19,8 @@ export const loginUser = async (username: string, password: string) => {
     password
   }
   );
-  console.log("login_response: ",response);
+  // Don't log full response - may contain sensitive data
+  console.log("login_response: success");
   return response.data;
 }
 
@@ -32,7 +32,8 @@ export const updateUser = async(username: string, email: string, password: strin
     password
   }
   );
-  console.log("login_response: ",response);
+  // Don't log full response - may contain sensitive data
+  console.log("login_response: success");
   return response.data;
 }
 

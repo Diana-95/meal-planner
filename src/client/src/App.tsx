@@ -22,6 +22,7 @@ import NewDish from './components/dishes/NewDish';
 import RecipeView from './components/dishes/RecipeView';
 
 import NewProduct from './components/products/NewProduct';
+import Profile from './components/auth/Profile';
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,11 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <HomePage />,
+          },
+          {
+            path: 'profile',
+            element: <Profile />,
+            errorElement: <ErrorPage />,
           },
           {
             path: 'calendar',

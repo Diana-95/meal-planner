@@ -13,7 +13,7 @@ export const registerFormMiddleware = (app: Express) => {
 
 export const registerMealController = (app: Express) => {
     app.post(API, validate(mealSchema, infoType.body), async (req: AuthRequest, res) => {
-        const {name, startDate, endDate, dishId } = req.body; // Access the sent data
+        const {name, startDate, endDate, dishIds = [] } = req.body; // Access the sent data
 
         const user = getUser(req, res);
         if(!user) return;
@@ -23,7 +23,7 @@ export const registerMealController = (app: Express) => {
             name,
             startDate,
             endDate,
-            dishId,
+            dishIds: Array.isArray(dishIds) ? dishIds : [],
             userId: user.userId
         }
 
@@ -68,7 +68,7 @@ app.get(API, validate(mealQuerySchema, infoType.query), async (req, res) => {
         API_BY_ID, 
         validate(mealSchema, infoType.body), 
         async (req: AuthRequest, res) => {
-            const { name, startDate, endDate, dishId } = req.body; // Access the sent data
+            const { name, startDate, endDate, dishIds = [] } = req.body; // Access the sent data
             const { id } = idParamSchema.parse(req.params);
 
             const user = getUser(req, res);
@@ -79,7 +79,7 @@ app.get(API, validate(mealQuerySchema, infoType.query), async (req, res) => {
                 name,
                 startDate,
                 endDate,
-                dishId,
+                dishIds: Array.isArray(dishIds) ? dishIds : [],
                 userId: user.userId
             }
 
@@ -93,7 +93,7 @@ app.get(API, validate(mealQuerySchema, infoType.query), async (req, res) => {
         validate(mealPatchSchema, infoType.body), 
         validate(idParamSchema, infoType.params),
         async (req: AuthRequest, res) => {
-            const { name, startDate, endDate, dishId } = req.body; // Access the sent data
+            const { name, startDate, endDate, dishIds } = req.body; // Access the sent data
             const { id } = idParamSchema.parse(req.params);
             const user = getUser(req, res);
             if(!user) return;
@@ -103,11 +103,11 @@ app.get(API, validate(mealQuerySchema, infoType.query), async (req, res) => {
                 name,
                 startDate,
                 endDate,
-                dishId,
+                dishIds: dishIds !== undefined ? (Array.isArray(dishIds) ? dishIds : []) : undefined as number[] | undefined,
                 userId: user.userId
             }
 
-            await mealRepository.update(meal);
+            await mealRepository.updatePatch(meal);
             res.status(204).json({ success: true });
     });
 

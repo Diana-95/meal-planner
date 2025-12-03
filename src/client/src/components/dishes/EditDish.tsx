@@ -10,6 +10,7 @@ import ProductAutocomplete from './IngredientOption';
 import { useApi } from '../../context/ApiContextProvider';
 import { useDishes } from '../../context/DishesContextProvider';
 import { toastError, toastInfo } from '../common/toastService';
+import { validateImageUrl } from '../../utils/urlValidation';
 
 const EditDish = () => {
 
@@ -22,6 +23,7 @@ const EditDish = () => {
   const [name, setName] = useState('');
   const [recipe, setRecipe] = useState('');
   const [imageUrl, setImage] = useState('');
+  const [imageUrlError, setImageUrlError] = useState<string | undefined>(undefined);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
@@ -90,6 +92,15 @@ const EditDish = () => {
   }
 
   const onSaveHandle = async () => {
+    // Validate image URL before saving
+    const urlValidation = validateImageUrl(imageUrl);
+    if (!urlValidation.isValid) {
+      toastError(urlValidation.error || 'Invalid image URL');
+      setImageUrlError(urlValidation.error);
+      return;
+    }
+    setImageUrlError(undefined);
+
     try {
       // First save the dish
       const response = await api.dishes.update(name, recipe, imageUrl, Number(dishId));
@@ -272,10 +283,25 @@ const EditDish = () => {
                   <input
                     type="text"
                     value={imageUrl}
-                    onChange={(e) => setImage(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setImage(value);
+                      // Validate on change and show error
+                      const validation = validateImageUrl(value);
+                      if (validation.isValid || !value.trim()) {
+                        setImageUrlError(undefined);
+                      } else {
+                        setImageUrlError(validation.error);
+                      }
+                    }}
                     placeholder="https://example.com/image.jpg"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm ${
+                      imageUrlError ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {imageUrlError && (
+                    <p className="mt-1 text-xs text-red-600">{imageUrlError}</p>
+                  )}
                 </div>
               </div>
             )}

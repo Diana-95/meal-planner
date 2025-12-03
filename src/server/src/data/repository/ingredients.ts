@@ -11,13 +11,14 @@ export interface IngredientQueryParams extends QueryParams{
 export class IngredientRepository extends SqlRepository<Ingredient, IngredientInput> {
 
     async create(r: IngredientInput): Promise<number> {
-        const [id] = await this.db('Ingredients')
-                            .insert({
-                                productId: r.productId, 
-                                dishId: r.dishId, 
-                                quantity: r.quantity
-                            });
-        return id;
+        const [inserted] = await this.db('Ingredients')
+            .insert({
+                productId: r.productId, 
+                dishId: r.dishId, 
+                quantity: r.quantity
+            })
+            .returning("id");
+        return typeof inserted === "number" ? inserted : inserted.id;
     }
 
     async update(r: IngredientInput): Promise<void> {
@@ -56,13 +57,13 @@ export class IngredientRepository extends SqlRepository<Ingredient, IngredientIn
                 'Products.userId as userId'
             );
         if(dishId) {
-            resQuery.where('dishId', dishId);
+            resQuery.where('Ingredients.dishId', dishId);
         }
         if(productId) {
-            resQuery.where('productId', productId);
+            resQuery.where('Ingredients.productId', productId);
         }
         if(searchName) {
-            resQuery.whereLike('productName', `%${searchName}%`)
+            resQuery.whereILike('Products.name', `%${searchName}%`);
         }
         resQuery.limit(limit);
         const rows = await resQuery;

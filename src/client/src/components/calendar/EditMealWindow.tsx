@@ -22,8 +22,8 @@ const EditMealWindow = () => {
   const [title, setTitle] = useState<string>('');
   const [start, setStart] = useState<Date | null>();
   const [end, setEnd] = useState<Date | null>();
-  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const hasDish = !!selectedDish;
+  const [selectedDishes, setSelectedDishes] = useState<Dish[]>([]);
+  const [tempDish, setTempDish] = useState<Dish | null>(null); // Temporary selection before adding to list
   
   useEffect(() => {
     const fetchMeal = async () => {
@@ -33,15 +33,21 @@ const EditMealWindow = () => {
           setTitle(meal.name);
           setStart(new Date(meal.startDate));
           setEnd(new Date(meal.endDate));
-          if (meal.dish?.id) {
-            try {
-              const fullDish = await api.dishes.getById(meal.dish.id);
-              setSelectedDish(fullDish ?? meal.dish);
-            } catch {
-              setSelectedDish(meal.dish);
-            }
+          if (meal.dishes && meal.dishes.length > 0) {
+            // Load full dish details for all dishes
+            const fullDishes = await Promise.all(
+              meal.dishes.map(async (dish) => {
+                try {
+                  const fullDish = await api.dishes.getById(dish.id);
+                  return fullDish || dish;
+                } catch {
+                  return dish;
+                }
+              })
+            );
+            setSelectedDishes(fullDishes);
           } else {
-            setSelectedDish(null);
+            setSelectedDishes([]);
           }
         }
         else {
@@ -54,14 +60,42 @@ const EditMealWindow = () => {
     };
   
     fetchMeal();
-  }, [api.meals.getById, id]); // Include 'id' in the dependency array if it can change
+  }, [api.meals.getById, api.dishes.getById, id, navigate]);
+
+  useEffect(() => {
+    const hydrateDish = async () => {
+      if (!tempDish?.id) return;
+      if (tempDish.ingredientList && tempDish.ingredientList.length > 0) return;
+      try {
+        const fullDish = await api.dishes.getById(tempDish.id);
+        if (fullDish) {
+          setTempDish(fullDish);
+        }
+      } catch (error) {
+        console.error(`Unable to load dish ${tempDish.id}`, error);
+      }
+    };
+    hydrateDish();
+  }, [api.dishes.getById, tempDish]);
+
+  const handleAddDish = () => {
+    if (tempDish && !selectedDishes.some(d => d.id === tempDish.id)) {
+      setSelectedDishes([...selectedDishes, tempDish]);
+      setTempDish(null);
+    }
+  };
+
+  const handleRemoveDish = (dishId: number) => {
+    setSelectedDishes(selectedDishes.filter(d => d.id !== dishId));
+  };
 
   const handleSave = async () => {
     if(!title || !start || !end) {
       toastError('Please fill in all fields before saving.');
       return;
     }
-    const response = await api.meals.update(Number(id), start.toISOString(), end.toISOString(), title, selectedDish? selectedDish.id: undefined)
+    const dishIds = selectedDishes.map(d => d.id);
+    const response = await api.meals.update(Number(id), start.toISOString(), end.toISOString(), title, dishIds)
     if(!response) {
       toastError('Failed to update meal. Please try again.');
       return;
@@ -70,27 +104,9 @@ const EditMealWindow = () => {
     setMyMeals((prev) => 
       prev.map((item) => 
         item.id === Number(id) ? 
-        {...item, title, start, end, dish: selectedDish } : item
+        {...item, title, start, end, dishes: selectedDishes } : item
       ));
     navigate(routes.calendar);
-  } 
-
-  const removeSelectedDish = async () => {
-    setSelectedDish(null);
-    if(!start || !end) {
-      toastError('Please fill in all fields before saving.');
-      return;
-    }
-    const response = await api.meals.update(Number(id), start.toISOString(), end.toISOString(), title, undefined);
-    if(!response) {
-      toastError('Failed to update meal. Please try again.');
-      return;
-    }
-    toastInfo(`Dish was removed from ${title}`);
-    setMyMeals((prev) => 
-      prev.map((item) => 
-        item.id === Number(id) ? {...item, dish: null } : item
-      ));
   }
 
   const handleClose = () => {
@@ -165,16 +181,46 @@ const EditMealWindow = () => {
             
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dish (Optional)
+                    Dishes (Optional)
                 </label>
-                <Autocomplete<Dish>
-                    data={selectedDish} 
-                    setData={setSelectedDish} 
-                    fetchAllSuggestions={api.dishes.get}
-                    CustomComponent={DishAutocomplete}
-                    removeData={() => setSelectedDish(null)}
-                    getEditLink={(dish) => `${routes.dishes}/${routes.editDish(dish.id)}`}
-                />
+                <div className="space-y-2">
+                    <div className="flex gap-2">
+                        <div className="flex-1">
+                            <Autocomplete<Dish>
+                                data={tempDish} 
+                                setData={setTempDish} 
+                                fetchAllSuggestions={api.dishes.get}
+                                CustomComponent={DishAutocomplete}
+                                removeData={() => setTempDish(null)}
+                                getEditLink={(dish) => routes.editDish(dish.id)}
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleAddDish}
+                            disabled={!tempDish || selectedDishes.some(d => d.id === tempDish.id)}
+                            className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                        >
+                            Add
+                        </button>
+                    </div>
+                    {selectedDishes.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                            {selectedDishes.map((dish) => (
+                                <div key={dish.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
+                                    <span className="text-sm text-gray-900">{dish.name}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveDish(dish.id)}
+                                        className="text-xs text-red-600 hover:text-red-700 font-medium"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
         

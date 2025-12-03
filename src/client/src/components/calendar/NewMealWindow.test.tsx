@@ -6,19 +6,35 @@ import { useApi } from "../../context/ApiContextProvider";
 import { useCalendarEvents } from "../../context/CalendarEventsContextProvider";
 import routes from "../../routes/routes";
 
+const mockDish1 = { 
+  id: 1, 
+  name: 'Mock Dish 1', 
+  recipe: 'Mock Recipe 1', 
+  imageUrl: 'mock-image-url-1', 
+  ingredientList: [] 
+};
+
+const mockDish2 = { 
+  id: 2, 
+  name: 'Mock Dish 2', 
+  recipe: 'Mock Recipe 2', 
+  imageUrl: 'mock-image-url-2', 
+  ingredientList: [] 
+};
+
+let mockSetDataCallCount = 0;
+
 jest.mock('../common/Autocomplete', () => ({
   __esModule: true,
-  default: ({ data, setData }: {data: Dish, setData: (dish: Dish) => void}) => (
+  default: ({ data, setData }: {data: Dish | null, setData: (dish: Dish | null) => void}) => (
     <div data-testid="mock-autocomplete" 
-    onClick={() => setData({ 
-              id: 1, 
-              name: 'Mock Dish', 
-              recipe: 'Mock Recipe', 
-              imageUrl: 'mock-image-url', 
-              ingredientList: [] 
-              })
-    }>
-      Mock Autocomplete
+    onClick={() => {
+      mockSetDataCallCount++;
+      // Alternate between dishes when clicked multiple times
+      const dishToSet = mockSetDataCallCount % 2 === 1 ? mockDish1 : mockDish2;
+      setData(dishToSet);
+    }}>
+      {data?.name || 'Mock Autocomplete'}
     </div>
   )
 }));
@@ -71,7 +87,7 @@ describe('create new meal window', () => {
     endDate.setHours(0, 0, 0, 0);
   }
   beforeEach(() => {
-    
+    mockSetDataCallCount = 0;
     jest.clearAllMocks();
     (useApi as jest.Mock).mockReturnValue({
       api: {
@@ -80,6 +96,10 @@ describe('create new meal window', () => {
         },
         dishes: {
           get: jest.fn(),
+          getById: jest.fn((id: number) => {
+            const dishes = [mockDish1, mockDish2];
+            return Promise.resolve(dishes.find(d => d.id === id) || mockDish1);
+          }),
         }
       },
     });
@@ -101,17 +121,19 @@ describe('create new meal window', () => {
     expect(newEventHeader).toBeInTheDocument();
   });
 
-  test('should call the save function with arguments that I entered into the input fields', () => {
+  test('should call the save function with a single dish', () => {
     render(<NewMealWindow />);
     const titleInput = screen.getByRole('textbox', { name: /title/i });
 
     const dishInput = screen.getByTestId('mock-autocomplete');
+    const addButton = screen.getByRole('button', { name: /add/i });
     const saveButton = screen.getByRole('button', {
         name: /save/i
       });
     
     fireEvent.change(titleInput, { target: { value: 'Test Meal' } });
     fireEvent.click(dishInput);
+    fireEvent.click(addButton);
     fireEvent.click(saveButton);
     
     resetDates();
@@ -120,7 +142,94 @@ describe('create new meal window', () => {
       'Test Meal',
       startDate.toISOString(), 
       endDate.toISOString(), 
-      1
+      [mockDish1.id]
+      );
+  });
+
+  test('should call the save function with multiple dishes', () => {
+    render(<NewMealWindow />);
+    const titleInput = screen.getByRole('textbox', { name: /title/i });
+
+    const dishInput = screen.getByTestId('mock-autocomplete');
+    const addButton = screen.getByRole('button', { name: /add/i });
+    const saveButton = screen.getByRole('button', {
+        name: /save/i
+      });
+    
+    fireEvent.change(titleInput, { target: { value: 'Test Meal' } });
+    
+    // Add first dish
+    fireEvent.click(dishInput);
+    fireEvent.click(addButton);
+    
+    // Add second dish
+    fireEvent.click(dishInput);
+    fireEvent.click(addButton);
+    
+    fireEvent.click(saveButton);
+    
+    resetDates();
+    expect(titleInput).toHaveValue('Test Meal');
+    expect(mockCreateMeal).toHaveBeenCalledWith(
+      'Test Meal',
+      startDate.toISOString(), 
+      endDate.toISOString(), 
+      [mockDish1.id, mockDish2.id]
+      );
+  });
+
+  test('should call the save function with no dishes', () => {
+    render(<NewMealWindow />);
+    const titleInput = screen.getByRole('textbox', { name: /title/i });
+    const saveButton = screen.getByRole('button', {
+        name: /save/i
+      });
+    
+    fireEvent.change(titleInput, { target: { value: 'Test Meal' } });
+    fireEvent.click(saveButton);
+    
+    resetDates();
+    expect(titleInput).toHaveValue('Test Meal');
+    expect(mockCreateMeal).toHaveBeenCalledWith(
+      'Test Meal',
+      startDate.toISOString(), 
+      endDate.toISOString(), 
+      []
+      );
+  });
+
+  test('should handle removing a dish', () => {
+    render(<NewMealWindow />);
+    const titleInput = screen.getByRole('textbox', { name: /title/i });
+    const dishInput = screen.getByTestId('mock-autocomplete');
+    const addButton = screen.getByRole('button', { name: /add/i });
+    const saveButton = screen.getByRole('button', {
+        name: /save/i
+      });
+    
+    fireEvent.change(titleInput, { target: { value: 'Test Meal' } });
+    
+    // Add first dish
+    fireEvent.click(dishInput);
+    fireEvent.click(addButton);
+    
+    // Add second dish
+    fireEvent.click(dishInput);
+    fireEvent.click(addButton);
+    
+    // Remove first dish
+    const removeButtons = screen.getAllByText(/remove/i);
+    expect(removeButtons.length).toBe(2);
+    fireEvent.click(removeButtons[0]);
+    
+    fireEvent.click(saveButton);
+    
+    resetDates();
+    expect(mockCreateMeal).toHaveBeenCalledWith(
+      'Test Meal',
+      startDate.toISOString(), 
+      endDate.toISOString(), 
+      [mockDish2.id]
       );
   });
 

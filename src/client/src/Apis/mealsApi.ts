@@ -1,34 +1,34 @@
 import  { axiosInstance }  from './utils';
 import { Meal } from '../types/types';
 
-export const createMeal = async (name: string, startDate: string, endDate: string, dishId?: number) => { 
+export const createMeal = async (name: string, startDate: string, endDate: string, dishIds?: number[]) => { 
   const response = await axiosInstance.post<{ rowID: number }>('/meals', {
       name, 
       startDate,
       endDate,
-      dishId
+      dishIds: dishIds || []
     });
     return response.data;
 }
 
-export const updateMeal = async (id: number, startDate: string, endDate: string, name: string, dishId?: number| null) => {
+export const updateMeal = async (id: number, startDate: string, endDate: string, name: string, dishIds?: number[]) => {
     const response = await axiosInstance.put(`/meals/${id}`, {
             startDate,
             endDate,
             name,
-            dishId
+            dishIds: dishIds || []
           });
           console.log(response);
     return response.data;
 }
 
 export const updateMealPart = async (id: number, startDate?: string, endDate?: string, name?: string, 
-  dishId?: number| null) => {
+  dishIds?: number[]) => {
   const response = await axiosInstance.patch<void>(`/meals/${id}`, {
           startDate,
           endDate,
           name,
-          dishId
+          dishIds
         }
     );
   return response.data;
@@ -75,6 +75,7 @@ export interface AggregatedIngredient {
   productName: string;
   measure: string;
   price: number;
+  emoji: string | null;
   totalQuantity: number;
 }
 

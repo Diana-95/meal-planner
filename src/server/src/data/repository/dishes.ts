@@ -19,14 +19,15 @@ export class DishRepository extends SqlRepository<Dish> {
     }
 
     async create(r: Dish): Promise<number> {
-        const [id] = await this.db('Dishes')
+        const [inserted] = await this.db('Dishes')
             .insert({
                 name: r.name, 
                 recipe: r.recipe, 
                 imageUrl: r.imageUrl, 
                 userId: r.userId
-            });
-        return id;
+            })
+            .returning("id");
+        return typeof inserted === "number" ? inserted : inserted.id;
     
     }
 
@@ -117,13 +118,12 @@ export class DishRepository extends SqlRepository<Dish> {
         .where('Dishes.userId', userId); // Filter by userId
 
         if(searchName) {
-            resQuery.whereLike('dishName', `%${searchName}%`);
+            resQuery.whereILike('Dishes.name', `%${searchName}%`);
         }
         if(cursor) {
-            resQuery
-            .andWhere('id', '>', cursor)
-            .limit(limit);
-        } 
+            resQuery.andWhere('Dishes.id', '>', cursor);
+        }
+        resQuery.limit(limit);
         const rows = await resQuery;
         return this.groupDishesWithIngredients(rows);
     };

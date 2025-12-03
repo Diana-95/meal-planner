@@ -43,14 +43,14 @@ export const mealSchema = z.object({
     name: z.string(),
     startDate: z.string(),
     endDate: z.string(),
-    dishId: z.number().nullish()
+    dishIds: z.array(z.number().int().positive()).optional().default([])
 });
 
 export const mealPatchSchema = z.object({
     name: z.string().optional(),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
-    dishId: z.number().nullish()
+    dishIds: z.array(z.number().int().positive()).optional()
 });
 
 export const ingredientSchema = z.object({
@@ -59,16 +59,53 @@ export const ingredientSchema = z.object({
     quantity: z.coerce.number()
 });
 
+// Helper function to validate image URLs and prevent XSS
+const imageUrlSchema = z.string().refine((url) => {
+    // Allow empty string (no image)
+    if (!url || url.trim() === '') return true;
+    
+    // Check for dangerous protocols that could lead to XSS
+    const dangerousProtocols = ['javascript:', 'vbscript:', 'data:text/html', 'data:application/javascript'];
+    const lowerUrl = url.toLowerCase().trim();
+    
+    for (const protocol of dangerousProtocols) {
+        if (lowerUrl.startsWith(protocol)) {
+            return false;
+        }
+    }
+    
+    // Allow data: URIs only for images (data:image/...)
+    if (lowerUrl.startsWith('data:')) {
+        return lowerUrl.startsWith('data:image/');
+    }
+    
+    // For http/https URLs, validate they're proper URLs
+    if (lowerUrl.startsWith('http://') || lowerUrl.startsWith('https://')) {
+        try {
+            const urlObj = new URL(url);
+            // Only allow http and https protocols
+            return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+        } catch {
+            return false; // Invalid URL format
+        }
+    }
+    
+    // Reject any other protocols
+    return false;
+}, {
+    message: "Image URL must be a valid HTTP/HTTPS URL or a data URI for images. Dangerous protocols are not allowed."
+});
+
 export const dishSchema = z.object({
     name: z.string(),
     recipe: z.string(),
-    imageUrl: z.string()
+    imageUrl: imageUrlSchema
 });
 
 export const dishPatchSchema = z.object({
     name: z.string().optional(),
     recipe: z.string().optional(),
-    imageUrl: z.string().optional()
+    imageUrl: imageUrlSchema.optional()
 });
 
 export const searchSchema = z.object({
