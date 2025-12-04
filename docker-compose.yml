@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "${POSTGRES_PORT:-5434}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
 
   server:
     build:
@@ -25,17 +25,14 @@ services:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV}
-      SERVER_HOST_PORT: ${SERVER_HOST_PORT:-4100}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-meal_planner}
       PGSSLMODE: ${PGSSLMODE}
-      CLIENT_PORT: ${CLIENT_PORT:-3000}
-      SERVER_URL: ${SERVER_URL}
       # JWT_SECRET_KEY and other variables are loaded from .env file via env_file
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "${SERVER_HOST_PORT:-4100}:${SERVER_HOST_PORT:-4100}"
+      - "${SERVER_HOST_PORT:-4000}:4000"
 
 
   client:
@@ -50,7 +47,7 @@ services:
     depends_on:
       - server
     ports:
-      - "${CLIENT_PORT}:3000"
+      - "${CLIENT_PORT:-3000}:3000"
 
 volumes:
   pgdata:
