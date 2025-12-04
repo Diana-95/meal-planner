@@ -20,6 +20,6 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/meals.sql ./meals.sql
 COPY --from=builder /app/reset.sql ./reset.sql
-EXPOSE 4000
+EXPOSE 4100
 CMD ["node", "dist/server.js"]
 
