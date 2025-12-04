@@ -1,0 +1,52 @@
+CREATE TABLE IF NOT EXISTS "Users" (
+    "id" SERIAL PRIMARY KEY,
+    "username" TEXT NOT NULL UNIQUE,
+    "email" TEXT NOT NULL UNIQUE,
+    "role" TEXT NOT NULL DEFAULT 'user',
+    "password_hash" TEXT NOT NULL,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "Products" (
+    "id" SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "Users"("id") ON DELETE CASCADE,
+    "name" TEXT NOT NULL,
+    "measure" TEXT NOT NULL,
+    "price" NUMERIC(10,2) NOT NULL,
+    "emoji" TEXT,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "Dishes" (
+    "id" SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "Users"("id") ON DELETE CASCADE,
+    "imageUrl" TEXT NOT NULL,
+    "recipe" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "Meals" (
+    "id" SERIAL PRIMARY KEY,
+    "startDate" TIMESTAMPTZ NOT NULL,
+    "endDate" TIMESTAMPTZ NOT NULL,
+    "name" TEXT NOT NULL,
+    "dishId" INTEGER REFERENCES "Dishes"("id") ON DELETE SET NULL,
+    "userId" INTEGER NOT NULL REFERENCES "Users"("id") ON DELETE CASCADE,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "Ingredients" (
+    "id" SERIAL PRIMARY KEY,
+    "productId" INTEGER NOT NULL REFERENCES "Products"("id") ON DELETE CASCADE,
+    "dishId" INTEGER NOT NULL REFERENCES "Dishes"("id") ON DELETE CASCADE,
+    "quantity" NUMERIC(10,2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "MealDishes" (
+    "id" SERIAL PRIMARY KEY,
+    "mealId" INTEGER NOT NULL REFERENCES "Meals"("id") ON DELETE CASCADE,
+    "dishId" INTEGER NOT NULL REFERENCES "Dishes"("id") ON DELETE CASCADE,
+    "userId" INTEGER NOT NULL REFERENCES "Users"("id") ON DELETE CASCADE,
+    CONSTRAINT "MealDishes_unique_meal_dish_user" UNIQUE ("mealId", "dishId", "userId")
+);
