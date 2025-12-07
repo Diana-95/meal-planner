@@ -37,14 +37,35 @@ const clientUrl = process.env.CLIENT_URL || `http://localhost:${process.env.CLIE
 const serverUrl = process.env.SERVER_URL || `http://localhost:${port}`;
 const expressApp: Express = express();
 
+// Support multiple origins for CORS (useful for Docker and different environments)
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [clientUrl];
+
 console.log(`Server configuration:
   Port: ${port}
   Client URL: ${clientUrl}
+  Allowed Origins: ${allowedOrigins.join(', ')}
   Server URL: ${serverUrl}
   Database URL: ${process.env.DATABASE_URL ? 'Set' : 'Not set'}
 `);
 
-expressApp.use(cors({ origin: clientUrl, credentials: true, }));
+expressApp.use(cors({ 
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`CORS: Allowed request from origin: ${allowedOrigins.join(', ')}`);
+      
+      console.warn(`CORS: Blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 
 expressApp.use(
   helmet({
