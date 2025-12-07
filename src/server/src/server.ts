@@ -32,7 +32,7 @@ import { registerUserController } from "./controllers/users";
 import cookieParser from 'cookie-parser';
 
 // Use SERVER_HOST_PORT for the server port
-const port = process.env.SERVER_HOST_PORT ? parseInt(process.env.SERVER_HOST_PORT, 10) : 4100;
+const port = 4000;
 const clientUrl = process.env.CLIENT_URL || `http://localhost:${process.env.CLIENT_PORT || '3000'}`;
 const serverUrl = process.env.SERVER_URL || `http://localhost:${port}`;
 const expressApp: Express = express();
