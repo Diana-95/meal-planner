@@ -1,10 +1,5 @@
 node_modules
 dist/
-src/server/src/scripts/add-emoji-column.ts
-src/server/src/scripts/add-emojis-to-products.ts
-src/server/src/scripts/check-products.ts
-src/server/src/scripts/seed-dishes.ts
-src/server/src/scripts/seed-products.ts
 
 # Environment variables
 .env
