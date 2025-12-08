@@ -37,12 +37,13 @@ export const updateUser = async(username: string, email: string, password: strin
   return response.data;
 }
 
-export const updateUserPart = async(username?: string, email?: string, password?: string) => {
+export const updateUserPart = async(username?: string, email?: string, password?: string, oldPassword?: string) => {
   const response = await axiosInstanceAuth.patch<void>
   (`/api/me`, {
     username,
     email,
-    password
+    password,
+    oldPassword
   }
   );
   return response.data;

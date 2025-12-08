@@ -12,7 +12,10 @@ const Profile = () => {
   
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
   const [password, setPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const hasFetchedRef = useRef(false);
@@ -47,7 +50,7 @@ const Profile = () => {
 
   const handleUpdate = async () => {
     // Only update fields that have changed
-    const updates: { username?: string; email?: string; password?: string } = {};
+    const updates: { username?: string; email?: string; password?: string; oldPassword?: string } = {};
     
     if (user && username !== user.username) {
       updates.username = username;
@@ -60,7 +63,13 @@ const Profile = () => {
         toastError('Password must be at least 6 characters long');
         return;
       }
+      // Require old password when changing password
+      if (!oldPassword || oldPassword.trim() === '') {
+        toastError('Please enter your current password to change it');
+        return;
+      }
       updates.password = password;
+      updates.oldPassword = oldPassword;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -69,7 +78,7 @@ const Profile = () => {
     }
 
     try {
-      await api.users.update(updates.username, updates.email, updates.password);
+      await api.users.update(updates.username, updates.email, updates.password, updates.oldPassword);
       
       // Update user context
       if (user) {
@@ -81,11 +90,23 @@ const Profile = () => {
       }
       
       toastInfo('Profile updated successfully!');
-      setPassword(''); // Clear password field
+      // Clear password fields and hide password change section
+      setPassword('');
+      setOldPassword('');
       setShowPassword(false);
+      setShowOldPassword(false);
+      setShowPasswordChange(false);
     } catch (error) {
       toastError('Failed to update profile');
     }
+  };
+
+  const handleCancelPasswordChange = () => {
+    setPassword('');
+    setOldPassword('');
+    setShowPassword(false);
+    setShowOldPassword(false);
+    setShowPasswordChange(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -155,44 +176,79 @@ const Profile = () => {
               />
             </div>
             
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  New Password (optional)
-                </label>
-                {password && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPassword('');
-                      setShowPassword(false);
-                    }}
-                    className="text-xs text-gray-500 hover:text-gray-700"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                minLength={6}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Leave blank to keep current password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              {password && (
+            {!showPasswordChange ? (
+              <div>
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="mt-1 text-xs text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowPasswordChange(true)}
+                  className="w-full text-left px-3 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 border border-primary-300 rounded-md hover:bg-primary-50 transition-colors"
                 >
-                  {showPassword ? 'Hide' : 'Show'} password
+                  Change Password
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-700">Change Password</h3>
+                  <button
+                    type="button"
+                    onClick={handleCancelPasswordChange}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                
+                <div>
+                  <label htmlFor="oldPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Current Password
+                  </label>
+                  <input
+                    id="oldPassword"
+                    name="oldPassword"
+                    type={showOldPassword ? "text" : "password"}
+                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                    placeholder="Enter your current password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                  />
+                  {oldPassword && (
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="mt-1 text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      {showOldPassword ? 'Hide' : 'Show'} password
+                    </button>
+                  )}
+                </div>
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    minLength={6}
+                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                    placeholder="Enter new password (min 6 characters)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  {password && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="mt-1 text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? 'Hide' : 'Show'} password
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex space-x-4">
