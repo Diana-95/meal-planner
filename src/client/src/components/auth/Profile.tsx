@@ -17,6 +17,15 @@ const Profile = () => {
   const [password, setPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Ensure password fields are always hidden by default and cleared when component mounts
+  useEffect(() => {
+    setShowPasswordChange(false);
+    setOldPassword('');
+    setPassword('');
+    setShowOldPassword(false);
+    setShowPassword(false);
+  }, []);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const hasFetchedRef = useRef(false);
 
@@ -207,6 +216,7 @@ const Profile = () => {
                     id="oldPassword"
                     name="oldPassword"
                     type={showOldPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                     placeholder="Enter your current password"
                     value={oldPassword}
@@ -231,6 +241,7 @@ const Profile = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     minLength={6}
                     className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                     placeholder="Enter new password (min 6 characters)"
