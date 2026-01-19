@@ -19,6 +19,9 @@ const NewDishWindow = () => {
   const [recipe, setRecipe] = useState('');
   const [imageUrl, setImage] = useState('');
   const [imageUrlError, setImageUrlError] = useState<string | undefined>(undefined);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const blobUrlRef = React.useRef<string | null>(null);
 
   const onClickSaveHandle = async () => {
     if(name === '' || recipe === ''){
@@ -26,20 +29,50 @@ const NewDishWindow = () => {
         return;
     }
     
-    // Validate image URL before saving
-    const urlValidation = validateImageUrl(imageUrl);
-    if (!urlValidation.isValid) {
-      toastError(urlValidation.error || 'Invalid image URL');
-      setImageUrlError(urlValidation.error);
-      return;
+    let finalImageUrl = imageUrl;
+    
+    // If a file was selected, upload it first
+    if (selectedFile) {
+      setUploadingImage(true);
+      try {
+        const uploadResult = await api.upload.image(selectedFile);
+        if (!uploadResult) {
+          toastError('Failed to upload image. Please try again.');
+          setUploadingImage(false);
+          return;
+        }
+        finalImageUrl = uploadResult.imageUrl;
+        // Prepend server URL if it's a relative path
+        if (finalImageUrl.startsWith('/')) {
+          const serverUrl = process.env.REACT_APP_AUTH_URL || 'http://localhost:4000';
+          finalImageUrl = `${serverUrl}${finalImageUrl}`;
+        }
+      } catch (error) {
+        toastError('Failed to upload image. Please try again.');
+        setUploadingImage(false);
+        return;
+      }
+      setUploadingImage(false);
+    } else if (imageUrl && !imageUrl.startsWith('blob:')) {
+      // Validate image URL if it's not a file upload preview (blob URL)
+      // Skip validation for server paths (already uploaded)
+      if (!imageUrl.startsWith('/uploads/') && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+        const urlValidation = validateImageUrl(imageUrl);
+        if (!urlValidation.isValid) {
+          toastError(urlValidation.error || 'Invalid image URL');
+          setImageUrlError(urlValidation.error);
+          return;
+        }
+      }
     }
+    
     setImageUrlError(undefined);
     
-    const response = await api.dishes.create(name, recipe, imageUrl);
+    const response = await api.dishes.create(name, recipe, finalImageUrl);
     if(response !== undefined){
         toastInfo(`New dish "${name}" was created`);
         setDishes((prevDishes) => 
-            [...prevDishes, ({ id: response.rowID, name, recipe, imageUrl} as Dish)]
+            [...prevDishes, ({ id: response.rowID, name, recipe, imageUrl: finalImageUrl} as Dish)]
         )
         navigate(routes.dishes);
     }   
@@ -58,29 +91,54 @@ const NewDishWindow = () => {
         return;
       }
       
-      // Check file size (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        toastError(`Image file is too large. Maximum size is 10MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+        toastError(`Image file is too large. Maximum size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
         return;
       }
       
-      // Convert file to base64 data URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImage(result);
-      };
-      reader.onerror = () => {
-        toastError('Failed to read image file');
-      };
-      reader.readAsDataURL(file);
+      // Revoke previous blob URL if it exists
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+      
+      // Store the file and create preview URL
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      blobUrlRef.current = previewUrl;
+      setImage(previewUrl);
+      setImageUrlError(undefined);
     }
   }
 
   const handleRemoveImage = () => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
     setImage('');
+    setSelectedFile(null);
   }
+  
+  // Cleanup blob URL on unmount or when imageUrl changes away from blob URL
+  React.useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Cleanup when imageUrl changes from blob URL to something else
+  React.useEffect(() => {
+    if (!imageUrl.startsWith('blob:') && blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }, [imageUrl]);
     return (
         <div 
             data-testid="overlay" 
@@ -170,7 +228,7 @@ const NewDishWindow = () => {
                                         <p className="mb-2 text-sm text-gray-500">
                                             <span className="font-semibold">Click to upload</span> or drag and drop
                                         </p>
-                                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 10MB)</p>
+                                        <p className="text-xs text-gray-500">PNG, JPG, GIF (MAX. 5MB)</p>
                                     </div>
                                     <input
                                         type="file"
@@ -187,6 +245,7 @@ const NewDishWindow = () => {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setImage(value);
+                                          setSelectedFile(null); // Clear file selection when typing URL
                                           // Validate on change and show error
                                           const validation = validateImageUrl(value);
                                           if (validation.isValid || !value.trim()) {
@@ -218,10 +277,10 @@ const NewDishWindow = () => {
                     </button>
                     <button 
                         onClick={onClickSaveHandle} 
-                        disabled={loading}
+                        disabled={loading || uploadingImage}
                         className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                     >
-                        {loading ? 'Saving...' : 'Save'}
+                        {uploadingImage ? 'Uploading image...' : loading ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             </div>

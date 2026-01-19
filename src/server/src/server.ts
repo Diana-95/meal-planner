@@ -29,7 +29,10 @@ import { registerProductController } from "./controllers/products";
 import { registerIngredientController } from "./controllers/ingredients";
 import protectedRoutes from "./middleware/protectedRoutes";
 import { registerUserController } from "./controllers/users";
+import { registerUploadController } from "./controllers/upload";
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 // Use SERVER_HOST_PORT for the server port
 const port = 4000;
@@ -67,6 +70,22 @@ expressApp.use(cors({
   credentials: true,
 }));
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(process.cwd(), 'uploads', 'images');
+if (!existsSync(uploadsDir)) {
+  mkdirSync(uploadsDir, { recursive: true });
+  console.log(`Created uploads directory: ${uploadsDir}`);
+}
+
+// Serve static files from uploads directory (BEFORE helmet to avoid CSP issues)
+expressApp.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  setHeaders: (res) => {
+    // Allow CORS for images
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+  }
+}));
+
 expressApp.use(
   helmet({
     contentSecurityPolicy: {
@@ -74,7 +93,7 @@ expressApp.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
+        imgSrc: ["'self'", "data:", "https:", "http:", serverUrl, `${serverUrl}/uploads`],
         connectSrc: ["'self'", serverUrl],
         fontSrc: ["'self'"],
         frameAncestors: ["'none'"],
@@ -84,6 +103,7 @@ expressApp.use(
 );
 expressApp.use(express.json());
 expressApp.use(cookieParser());
+
 expressApp.use('/api', protectedRoutes);
 
 registerUserController(expressApp);
@@ -91,6 +111,7 @@ registerMealController(expressApp);
 registerDishController(expressApp);
 registerProductController(expressApp);
 registerIngredientController(expressApp);
+registerUploadController(expressApp);
 
 const server = createServer(expressApp);
 

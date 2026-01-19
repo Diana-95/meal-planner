@@ -24,6 +24,10 @@ const EditDish = () => {
   const [recipe, setRecipe] = useState('');
   const [imageUrl, setImage] = useState('');
   const [imageUrlError, setImageUrlError] = useState<string | undefined>(undefined);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string>('');
+  const blobUrlRef = React.useRef<string | null>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
@@ -53,6 +57,7 @@ const EditDish = () => {
         else setIngredients([]);
         setName(dish.name);
         setImage(dish.imageUrl);
+        setOriginalImageUrl(dish.imageUrl);
         setRecipe(dish.recipe);
       }
       else {
@@ -92,18 +97,60 @@ const EditDish = () => {
   }
 
   const onSaveHandle = async () => {
-    // Validate image URL before saving
-    const urlValidation = validateImageUrl(imageUrl);
-    if (!urlValidation.isValid) {
-      toastError(urlValidation.error || 'Invalid image URL');
-      setImageUrlError(urlValidation.error);
-      return;
+    let finalImageUrl = imageUrl;
+    
+    // If a file was selected, upload it first
+    if (selectedFile) {
+      setUploadingImage(true);
+      try {
+        const uploadResult = await api.upload.image(selectedFile);
+        if (!uploadResult) {
+          toastError('Failed to upload image. Please try again.');
+          setUploadingImage(false);
+          return;
+        }
+        finalImageUrl = uploadResult.imageUrl;
+        // Prepend server URL if it's a relative path
+        if (finalImageUrl.startsWith('/')) {
+          const serverUrl = process.env.REACT_APP_AUTH_URL || 'http://localhost:4000';
+          finalImageUrl = `${serverUrl}${finalImageUrl}`;
+        }
+        // Optionally delete old image if it was a server upload
+        if (originalImageUrl.startsWith('/uploads/')) {
+          const oldFilename = originalImageUrl.split('/').pop();
+          if (oldFilename) {
+            try {
+              await api.upload.deleteImage(oldFilename);
+            } catch (error) {
+              // Ignore errors when deleting old image
+              console.warn('Failed to delete old image:', error);
+            }
+          }
+        }
+      } catch (error) {
+        toastError('Failed to upload image. Please try again.');
+        setUploadingImage(false);
+        return;
+      }
+      setUploadingImage(false);
+    } else if (imageUrl && !imageUrl.startsWith('blob:')) {
+      // Validate image URL if it's not a file upload preview (blob URL)
+      // Skip validation for server paths (already uploaded) or external URLs
+      if (!imageUrl.startsWith('/uploads/') && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+        const urlValidation = validateImageUrl(imageUrl);
+        if (!urlValidation.isValid) {
+          toastError(urlValidation.error || 'Invalid image URL');
+          setImageUrlError(urlValidation.error);
+          return;
+        }
+      }
     }
+    
     setImageUrlError(undefined);
 
     try {
       // First save the dish
-      const response = await api.dishes.update(name, recipe, imageUrl, Number(dishId));
+      const response = await api.dishes.update(name, recipe, finalImageUrl, Number(dishId));
       
       if (response !== undefined) {
         // Then save all ingredients (wait for completion)
@@ -111,7 +158,7 @@ const EditDish = () => {
         
         // Update local state
         setDishes(prevDishes => prevDishes.map((item) => 
-          item.id === Number(dishId) ? {...item, name, recipe, imageUrl, ingredientList: ingredients} satisfies Dish
+          item.id === Number(dishId) ? {...item, name, recipe, imageUrl: finalImageUrl, ingredientList: ingredients} satisfies Dish
           : item));
         
         toastInfo(`${name} was updated`);
@@ -157,29 +204,54 @@ const EditDish = () => {
         return;
       }
       
-      // Check file size (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        toastError(`Image file is too large. Maximum size is 10MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+        toastError(`Image file is too large. Maximum size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
         return;
       }
       
-      // Convert file to base64 data URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImage(result);
-      };
-      reader.onerror = () => {
-        toastError('Failed to read image file');
-      };
-      reader.readAsDataURL(file);
+      // Revoke previous blob URL if it exists
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+      
+      // Store the file and create preview URL
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      blobUrlRef.current = previewUrl;
+      setImage(previewUrl);
+      setImageUrlError(undefined);
     }
   }
 
   const handleRemoveImage = () => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
     setImage('');
+    setSelectedFile(null);
   }
+  
+  // Cleanup blob URL on unmount
+  React.useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Cleanup when imageUrl changes from blob URL to something else
+  React.useEffect(() => {
+    if (!imageUrl.startsWith('blob:') && blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }, [imageUrl]);
 
   return (
     <div 
@@ -380,10 +452,10 @@ const EditDish = () => {
           </button>
           <button 
             onClick={onSaveHandle}
-            disabled={loading}
+            disabled={loading || uploadingImage}
             className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {loading ? 'Saving...' : 'Save'}
+            {uploadingImage ? 'Uploading image...' : loading ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

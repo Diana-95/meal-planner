@@ -5,6 +5,7 @@ import { createMeal, deleteMeal, getAllMeals, getMealById, getAggregatedIngredie
 import { createDish, deleteDish, getAllDishes, getDishById, updateDish } from '../apis/dishesApi';
 import { createProduct, deleteProduct, getAllProducts, getProductById, updateProduct, updateProductPart } from '../apis/productsApi';
 import { createIngredient, deleteIngredient, getIngredients, updateIngredient } from '../apis/ingredientsApi';
+import { uploadImage, deleteImage } from '../apis/uploadApi';
 import { useNavigate } from 'react-router-dom';
 import routes from '../routes/routes';
 import { getCurrentUser, loginUser, registerUser, updateUserPart } from '../apis/usersApi';
@@ -132,6 +133,10 @@ export const useApi = () => {
       login: handleApiCall(loginUser),
       get: handleApiCall(getCurrentUser),
       update: handleApiCall(updateUserPart),
+    },
+    upload: {
+      image: handleApiCall(uploadImage),
+      deleteImage: handleApiCall(deleteImage),
     }
     // Add more entities similarly
   }), [handleApiCall]);

@@ -181,19 +181,35 @@ cd src/client
 npm test
 ```
 
-## Production Build
+## Demo Mode
 
-### Server
-```bash
-cd src/server
-npm run build
-# The compiled JavaScript will be in the dist/ directory
-```
+The application supports a demo mode that allows visitors to explore the app with pre-populated data without requiring registration.
 
-### Client
-```bash
-cd src/client
-npm run build
-# The production build will be in the build/ directory
-```
+### Enabling Demo Mode
+
+1. Seed the demo user data:
+   ```bash
+   cd src/server
+   npm run seed:demo
+   ```
+2. Restart your application
+
+### How Demo Mode Works
+
+- **Auto-login**: If the demo user exists, visitors are automatically logged in as the demo user on first visit
+- **Read-only**: The demo account is read-only - all write operations (POST, PUT, DELETE) are blocked by the server
+- **Shared data**: All visitors see the same demo data (products, dishes, meals)
+- **Demo credentials**: username: `demo`, password: `demo123`
+
+### Disabling Demo Mode
+
+To disable demo mode, simply delete the demo user from the database. The system will automatically detect that the demo user doesn't exist and will not attempt auto-login.
+
+### Demo Data
+
+The demo user includes:
+- 30+ sample products (ingredients and groceries)
+- 20+ sample dishes with recipes and ingredients
+- Meal plans for the next 30 days
+
 

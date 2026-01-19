@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { normalizeImageUrl } from '../../utils/imageUrl';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Dish, Ingredient } from '../../types/types';
 import routes from '../../routes/routes';
@@ -99,7 +100,7 @@ const RecipeView = () => {
         {dish.imageUrl ? (
           <div className="w-full">
             <img
-              src={dish.imageUrl}
+              src={normalizeImageUrl(dish.imageUrl)}
               alt={dish.name}
               className="w-full h-96 object-cover"
             />

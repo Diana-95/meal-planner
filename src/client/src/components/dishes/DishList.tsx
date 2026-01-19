@@ -6,6 +6,7 @@ import styles from './Dishes.module.css';
 import routes from '../../routes/routes';
 import { useApi } from '../../context/ApiContextProvider';
 import { useDishes } from '../../context/DishesContextProvider';
+import { normalizeImageUrl } from '../../utils/imageUrl';
 
 const DishList = () => {
 
@@ -117,7 +118,7 @@ const DishList = () => {
                 <div className="relative">
                   {dish.imageUrl ? (
                     <img 
-                      src={dish.imageUrl} 
+                      src={normalizeImageUrl(dish.imageUrl)} 
                       alt={dish.name} 
                       className="w-full h-48 object-cover"
                     />

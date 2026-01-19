@@ -15,3 +15,5 @@ security-reports/zap-authenticated-report-20251202_150133.json
 todo
 src/server/docs/postgres-rollout.md
 src/server/docs/sqlite-to-postgres.md
+uploads/
+

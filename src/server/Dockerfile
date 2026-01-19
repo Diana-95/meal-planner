@@ -20,5 +20,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/meals.sql ./meals.sql
 COPY --from=builder /app/reset.sql ./reset.sql
+# Create uploads directory for image storage
+RUN mkdir -p /app/uploads/images
 CMD ["node", "dist/server.js"]
 

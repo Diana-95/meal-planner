@@ -1,5 +1,6 @@
 import React from 'react';
 import { Dish } from '../../types/types';
+import { normalizeImageUrl } from '../../utils/imageUrl';
 
 const DishAutocomplete: React.FC<{ item: Dish }> = ({ item }) => {
   const ingredients = item.ingredientList ?? [];
@@ -8,7 +9,7 @@ const DishAutocomplete: React.FC<{ item: Dish }> = ({ item }) => {
     <div className="flex items-center gap-3 py-1">
       {item.imageUrl && (
         <img
-          src={item.imageUrl}
+          src={normalizeImageUrl(item.imageUrl)}
           alt={item.name}
           className="w-14 h-14 object-cover rounded border border-gray-200"
         />
