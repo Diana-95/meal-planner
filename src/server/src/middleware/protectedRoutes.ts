@@ -1,9 +1,11 @@
 import express, { Request, Response } from 'express';
 import verifyToken from '../middleware/authMiddleware';
+import { demoModeMiddleware } from './demoModeMiddleware';
 
 const router = express.Router();
 
 router.use(verifyToken);
+router.use(demoModeMiddleware);
 // Protected route
 router.get('/api', (req: Request, res: Response) => {
   console.log('router.get')

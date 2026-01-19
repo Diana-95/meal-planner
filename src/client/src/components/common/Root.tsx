@@ -2,12 +2,13 @@ import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from "react-router-dom"
 import { useUser } from '../../context/UserContextProvider';
 import routes from '../../routes/routes';
+import DemoBanner from './DemoBanner';
 
 
 const Root = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const {user} = useUser();
+    const {user, isDemoMode} = useUser();
     
     useEffect(() => {
       const currentPath = location.pathname;
@@ -31,6 +32,7 @@ const Root = () => {
     
     return (
         <div className="min-h-screen bg-gray-50 pb-16">
+            {isDemoMode && <DemoBanner />}
             <Outlet />
         </div>
     )

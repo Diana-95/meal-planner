@@ -85,7 +85,10 @@ const NavBar = () => {
                             {user?.username}
                         </Link>
                         <button 
-                            onClick={() => {setUser(null)}} 
+                            onClick={() => {
+                                localStorage.setItem('userExplicitlyLoggedOut', 'true');
+                                setUser(null);
+                            }} 
                             className="px-2 py-1 lg:px-4 lg:py-2 text-xs lg:text-base bg-red-500 text-white rounded-md lg:rounded-lg hover:bg-red-600 transition-colors font-medium"
                         >
                             Logout
@@ -152,6 +155,7 @@ const NavBar = () => {
                             </Link>
                             <button 
                                 onClick={() => {
+                                    localStorage.setItem('userExplicitlyLoggedOut', 'true');
                                     setUser(null);
                                     setIsMenuOpen(false);
                                 }}
